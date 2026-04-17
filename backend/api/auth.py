@@ -17,7 +17,17 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    user = User(email=body.email, password_hash=hash_password(body.password))
+    user = User(
+        email=body.email,
+        password_hash=hash_password(body.password),
+        first_name=body.first_name,
+        last_name=body.last_name,
+        age=body.age,
+        phone=body.phone,
+        address=body.address,
+        city=body.city,
+        country=body.country,
+    )
     db.add(user)
     await db.commit()
     await db.refresh(user)
@@ -38,6 +48,13 @@ async def me(current_user: User = Depends(get_current_user)):
     return UserResponse(
         id=current_user.id,
         email=current_user.email,
+        first_name=current_user.first_name,
+        last_name=current_user.last_name,
+        age=current_user.age,
+        phone=current_user.phone,
+        address=current_user.address,
+        city=current_user.city,
+        country=current_user.country,
         plan=current_user.plan,
         has_binance_keys=bool(current_user.binance_api_key),
     )

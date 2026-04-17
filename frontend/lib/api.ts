@@ -29,9 +29,13 @@ async function req<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 export const auth = {
-  register: (email: string, password: string) =>
+  register: (data: {
+    email: string; password: string;
+    first_name: string; last_name: string; age: number;
+    phone?: string; address?: string; city?: string; country?: string;
+  }) =>
     req<{ access_token: string }>('/auth/register', {
-      method: 'POST', body: JSON.stringify({ email, password }),
+      method: 'POST', body: JSON.stringify(data),
     }),
   login: (email: string, password: string) =>
     req<{ access_token: string }>('/auth/login', {
