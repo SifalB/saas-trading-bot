@@ -88,4 +88,14 @@ export type Stats = {
   best_trade: number; worst_trade: number; active_bots: number; trades_today: number;
 };
 
-export const dashboard = { stats: () => req<Stats>('/dashboard/stats') };
+export type BotStats = {
+  bot_id: number; name: string; type: string; status: string; paper_mode: boolean;
+  total_pnl: number; win_rate: number; total_trades: number;
+  best_trade: number; worst_trade: number;
+  initial_balance: number; current_balance: number;
+};
+
+export const dashboard = {
+  stats: () => req<Stats>('/dashboard/stats'),
+  compare: () => req<BotStats[]>('/dashboard/compare'),
+};

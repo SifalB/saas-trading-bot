@@ -5,7 +5,7 @@ import Nav from '@/components/Nav';
 import PortfolioChart from '@/components/PortfolioChart';
 import BotCard from '@/components/BotCard';
 import Card, { CardHead, CardLabel } from '@/components/Card';
-import { dashboard, bots as botApi, trades as tradesApi, auth, isLoggedIn, type Bot, type Stats, type Trade } from '@/lib/api';
+import { dashboard, bots as botApi, trades as tradesApi, auth, isLoggedIn, type Bot, type BotStats, type Stats, type Trade } from '@/lib/api';
 
 function seed5000(pnl: number) {
   const base = 5000;
@@ -21,19 +21,21 @@ export default function DashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [allBots, setAllBots] = useState<Bot[]>([]);
+  const [botStats, setBotStats] = useState<BotStats[]>([]);
   const [recentTrades, setRecentTrades] = useState<Trade[]>([]);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
 
   async function load() {
     try {
-      const [s, b, t, me] = await Promise.all([
+      const [s, b, bs, t, me] = await Promise.all([
         dashboard.stats(),
         botApi.list(),
+        dashboard.compare(),
         tradesApi.list({ limit: 6 }),
         auth.me(),
       ]);
-      setStats(s); setAllBots(b); setRecentTrades(t); setEmail(me.email);
+      setStats(s); setAllBots(b); setBotStats(bs); setRecentTrades(t); setEmail(me.email);
     } catch {
       router.push('/login');
     } finally {
@@ -141,7 +143,7 @@ export default function DashboardPage() {
                 </a>
               </Card>
             ) : (
-              allBots.map(b => <BotCard key={b.id} bot={b} onRefresh={load} />)
+              allBots.map(b => <BotCard key={b.id} bot={b} stats={botStats.find(s => s.bot_id === b.id)} onRefresh={load} />)
             )}
           </div>
         </div>

@@ -1,8 +1,8 @@
 'use client';
-import { Bot, bots as botApi } from '@/lib/api';
+import { Bot, BotStats, bots as botApi } from '@/lib/api';
 import { useState } from 'react';
 
-export default function BotCard({ bot, onRefresh }: { bot: Bot; onRefresh: () => void }) {
+export default function BotCard({ bot, stats, onRefresh }: { bot: Bot; stats?: BotStats; onRefresh: () => void }) {
   const [loading, setLoading] = useState(false);
   const isRunning = bot.status === 'running';
 
@@ -17,7 +17,7 @@ export default function BotCard({ bot, onRefresh }: { bot: Bot; onRefresh: () =>
     }
   }
 
-  const typeLabel: Record<string, string> = { grid: 'Grid Trading', scalp: 'Scalping', corr: 'Correlation' };
+  const typeLabel: Record<string, string> = { grid: 'Grid Trading', scalp: 'Scalping', corr: 'Correlation', mtf: 'MTF Confluence' };
 
   return (
     <div style={{
@@ -57,13 +57,13 @@ export default function BotCard({ bot, onRefresh }: { bot: Bot; onRefresh: () =>
         marginTop: 22, paddingTop: 22, borderTop: '1px solid rgba(255,255,255,0.1)',
       }}>
         {[
-          { k: 'Symbols', v: ((bot.config.symbols || bot.config.alt_symbols) as string[] | undefined)?.length ?? '—' },
-          { k: 'Paper mode', v: bot.paper_mode ? 'Yes' : 'Live' },
-          { k: 'Status', v: bot.status },
-        ].map(({ k, v }) => (
+          { k: 'P&L', v: stats ? `${stats.total_pnl >= 0 ? '+' : ''}$${stats.total_pnl.toFixed(2)}` : '—', color: stats ? (stats.total_pnl >= 0 ? 'var(--green)' : 'var(--red)') : undefined },
+          { k: 'Win rate', v: stats ? `${stats.win_rate}%` : '—' },
+          { k: 'Trades', v: stats ? String(stats.total_trades) : '—' },
+        ].map(({ k, v, color }) => (
           <div key={k}>
             <div style={{ fontFamily: 'Geist Mono', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>{k}</div>
-            <div style={{ fontSize: 20, fontWeight: 500, marginTop: 6 }}>{String(v)}</div>
+            <div style={{ fontSize: 20, fontWeight: 500, marginTop: 6, color: color ?? '#fff' }}>{String(v)}</div>
           </div>
         ))}
       </div>

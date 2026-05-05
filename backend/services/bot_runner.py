@@ -19,6 +19,7 @@ from backend.workers import task_manager
 from .strategy_grid import GridStrategy
 from .strategy_scalp import ScalpStrategy
 from .strategy_corr import CorrStrategy
+from .strategy_mtf import MtfStrategy
 
 
 async def _save_log(bot_id: int, message: str) -> None:
@@ -68,6 +69,7 @@ STRATEGY_MAP = {
     "grid": GridStrategy,
     "scalp": ScalpStrategy,
     "corr": CorrStrategy,
+    "mtf": MtfStrategy,
 }
 
 

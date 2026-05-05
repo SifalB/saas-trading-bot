@@ -19,8 +19,12 @@ class Settings(BaseSettings):
     # Encryption key for Binance API keys (Fernet — 32 url-safe base64 bytes)
     FERNET_KEY: str = "change-me-generate-with-Fernet.generate_key()"
 
-    # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    # CORS — comma-separated list, e.g. "http://localhost:3000,https://yourapp.vercel.app"
+    CORS_ORIGINS: str = "http://localhost:3000"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
 
 settings = Settings()

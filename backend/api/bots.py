@@ -41,8 +41,8 @@ async def create_bot(
         if len(result.scalars().all()) >= MAX_BOTS_FREE:
             raise HTTPException(status_code=403, detail="Free plan limited to 1 bot. Upgrade to Pro.")
 
-    if body.type not in ("grid", "scalp", "corr"):
-        raise HTTPException(status_code=400, detail="Invalid bot type. Use: grid | scalp | corr")
+    if body.type not in ("grid", "scalp", "corr", "mtf"):
+        raise HTTPException(status_code=400, detail="Invalid bot type. Use: grid | scalp | corr | mtf")
 
     # Merge with defaults so missing keys are filled in
     config = {**DEFAULT_CONFIGS[body.type], **body.config}
