@@ -15,10 +15,14 @@ const REASON_COLORS: Record<string, { bg: string; color: string; label: string }
 };
 
 const STRATEGY_META: Record<string, { label: string; color: string }> = {
-  mtf:   { label: 'MTF',    color: 'oklch(0.55 0.14 200)' },
-  scalp: { label: 'Scalp',  color: 'oklch(0.6 0.15 280)' },
-  grid:  { label: 'Grid',   color: 'oklch(0.62 0.14 160)' },
-  corr:  { label: 'Corr',   color: 'oklch(0.65 0.15 60)' },
+  mtf:      { label: 'MTF',      color: 'oklch(0.55 0.14 200)' },
+  scalp:    { label: 'Scalp',    color: 'oklch(0.6 0.15 280)' },
+  grid:     { label: 'Grid',     color: 'oklch(0.62 0.14 160)' },
+  corr:     { label: 'Corr',     color: 'oklch(0.65 0.15 60)' },
+  breakout: { label: 'Breakout', color: 'oklch(0.58 0.17 28)' },
+  dip:      { label: 'Dip',      color: 'oklch(0.6 0.15 330)' },
+  volbreak: { label: 'VolBrk',   color: 'oklch(0.6 0.14 100)' },
+  rotation: { label: 'Rotation', color: 'oklch(0.55 0.12 240)' },
 };
 
 export default function ActivityPage() {

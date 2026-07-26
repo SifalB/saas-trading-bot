@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.database import get_db
 from backend.models.bot import Bot
 from backend.models.user import User
-from backend.schemas.bot import BotCreate, BotResponse, BotUpdate, DEFAULT_CONFIGS
+from backend.schemas.bot import BotCreate, BotResponse, BotUpdate, DEFAULT_CONFIGS, STRATEGY_LABELS
 from backend.services.bot_runner import run_bot
 from backend.workers import task_manager
 from .deps import get_current_user
@@ -34,8 +34,11 @@ async def create_bot(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if body.type not in ("grid", "scalp", "corr", "mtf"):
-        raise HTTPException(status_code=400, detail="Invalid bot type. Use: grid | scalp | corr | mtf")
+    if body.type not in DEFAULT_CONFIGS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid bot type. Use one of: {' | '.join(DEFAULT_CONFIGS)}",
+        )
 
     # Merge with defaults so missing keys are filled in
     config = {**DEFAULT_CONFIGS[body.type], **body.config}
@@ -80,14 +83,6 @@ async def delete_bot(
     await db.commit()
 
 
-_LAUNCH_ALL = {
-    "mtf": "Multi-Timeframe",
-    "scalp": "Scalping (RSI+EMA)",
-    "grid": "Grid",
-    "corr": "Correlation",
-}
-
-
 @router.post("/launch-all", response_model=list[BotResponse])
 async def launch_all(
     current_user: User = Depends(get_current_user),
@@ -98,7 +93,7 @@ async def launch_all(
     existing = {b.type: b for b in result.scalars().all()}
 
     bots: list[Bot] = []
-    for btype, label in _LAUNCH_ALL.items():
+    for btype, label in STRATEGY_LABELS.items():
         bot = existing.get(btype)
         if bot is None:
             bot = Bot(

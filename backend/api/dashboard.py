@@ -8,20 +8,12 @@ from backend.core.database import get_db
 from backend.models.bot import Bot
 from backend.models.trade import Trade
 from backend.models.user import User
-from backend.schemas.bot import BotStats, StrategyStats
+from backend.schemas.bot import BotStats, StrategyStats, STRATEGY_LABELS
 from backend.schemas.trade import DashboardStats
 from backend.workers import task_manager
 from .deps import get_current_user
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
-
-# All strategy types, shown even before any bot of that type is created.
-STRATEGY_LABELS = {
-    "mtf": "Multi-Timeframe",
-    "scalp": "Scalping (RSI+EMA)",
-    "grid": "Grid",
-    "corr": "Correlation",
-}
 
 
 @router.get("/stats", response_model=DashboardStats)

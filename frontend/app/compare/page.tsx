@@ -6,6 +6,7 @@ import { dashboard, bots as botApi, isLoggedIn, type BotStats, type Bot } from '
 
 const TYPE_LABEL: Record<string, string> = {
   grid: 'Grid', scalp: 'Scalp', corr: 'Corr', mtf: 'MTF',
+  breakout: 'Breakout', dip: 'Dip', volbreak: 'VolBrk', rotation: 'Rotation',
 };
 
 export default function ComparePage() {

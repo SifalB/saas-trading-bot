@@ -17,7 +17,11 @@ export default function BotCard({ bot, stats, onRefresh }: { bot: Bot; stats?: B
     }
   }
 
-  const typeLabel: Record<string, string> = { grid: 'Grid Trading', scalp: 'Scalping', corr: 'Correlation', mtf: 'MTF Confluence' };
+  const typeLabel: Record<string, string> = {
+    grid: 'Grid Trading', scalp: 'Scalping', corr: 'Correlation', mtf: 'MTF Confluence',
+    breakout: 'Donchian Breakout', dip: 'Dip Buyer (RSI-2)',
+    volbreak: 'Volatility Breakout', rotation: 'Momentum Rotation',
+  };
 
   return (
     <div style={{

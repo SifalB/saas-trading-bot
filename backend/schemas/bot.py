@@ -120,9 +120,85 @@ MTF_DEFAULT_CONFIG = {
     "poll_interval": 10,
 }
 
+BREAKOUT_DEFAULT_CONFIG = {
+    "symbols": ["BTC/USDT", "ETH/USDT", "BNB/USDT", "SOL/USDT"],
+    "timeframe": "1h",
+    "candles": 120,
+    "entry_lookback": 20,
+    "exit_lookback": 10,
+    "atr_period": 14,
+    "atr_trail_mult": 2.5,
+    "stop_loss_pct": 0.02,
+    "trade_size_pct": 0.25,
+    "initial_balance": 5000.0,
+    "poll_interval": 60,
+}
+
+DIP_DEFAULT_CONFIG = {
+    "symbols": ["BTC/USDT", "ETH/USDT", "BNB/USDT", "SOL/USDT"],
+    "timeframe": "15m",
+    "candles": 250,
+    "trend_sma_period": 200,
+    "rsi_period": 2,
+    "rsi_oversold": 10,
+    "bb_period": 20,
+    "bb_std": 2.0,
+    "stop_loss_pct": 0.015,
+    "trade_timeout_seconds": 14400,
+    "trade_size_pct": 0.25,
+    "initial_balance": 5000.0,
+    "poll_interval": 30,
+}
+
+VOLBREAK_DEFAULT_CONFIG = {
+    "symbols": ["BTC/USDT", "ETH/USDT", "BNB/USDT", "SOL/USDT"],
+    "timeframe": "5m",
+    "candles": 200,
+    "atr_period": 14,
+    "breakout_mult": 1.2,
+    "lookback_bars": 12,
+    "volume_multiplier": 1.3,
+    "tp_atr_mult": 1.5,
+    "sl_atr_mult": 1.0,
+    "trade_timeout_seconds": 3600,
+    "trade_size_pct": 0.25,
+    "initial_balance": 5000.0,
+    "poll_interval": 20,
+}
+
+ROTATION_DEFAULT_CONFIG = {
+    "symbols": ["BTC/USDT", "ETH/USDT", "BNB/USDT", "SOL/USDT"],
+    "timeframe": "1h",
+    "candles": 120,
+    "momentum_lookback": 24,
+    "min_momentum": 0.0,
+    "rebalance_seconds": 3600,
+    "switch_margin": 0.005,
+    "stop_loss_pct": 0.05,
+    "trade_size_pct": 0.95,
+    "initial_balance": 5000.0,
+    "poll_interval": 60,
+}
+
+# Display names — single source of truth for the API and dashboard.
+STRATEGY_LABELS = {
+    "mtf": "Multi-Timeframe",
+    "scalp": "Scalping (RSI+EMA)",
+    "grid": "Grid",
+    "corr": "Correlation",
+    "breakout": "Donchian Breakout",
+    "dip": "Dip Buyer (RSI-2)",
+    "volbreak": "Volatility Breakout",
+    "rotation": "Momentum Rotation",
+}
+
 DEFAULT_CONFIGS = {
     "grid": GRID_DEFAULT_CONFIG,
     "scalp": SCALP_DEFAULT_CONFIG,
     "corr": CORR_DEFAULT_CONFIG,
     "mtf": MTF_DEFAULT_CONFIG,
+    "breakout": BREAKOUT_DEFAULT_CONFIG,
+    "dip": DIP_DEFAULT_CONFIG,
+    "volbreak": VOLBREAK_DEFAULT_CONFIG,
+    "rotation": ROTATION_DEFAULT_CONFIG,
 }

@@ -20,6 +20,10 @@ from .strategy_grid import GridStrategy
 from .strategy_scalp import ScalpStrategy
 from .strategy_corr import CorrStrategy
 from .strategy_mtf import MtfStrategy
+from .strategy_breakout import BreakoutStrategy
+from .strategy_dip import DipStrategy
+from .strategy_volbreak import VolBreakStrategy
+from .strategy_rotation import RotationStrategy
 
 
 async def _save_log(bot_id: int, message: str) -> None:
@@ -70,6 +74,10 @@ STRATEGY_MAP = {
     "scalp": ScalpStrategy,
     "corr": CorrStrategy,
     "mtf": MtfStrategy,
+    "breakout": BreakoutStrategy,
+    "dip": DipStrategy,
+    "volbreak": VolBreakStrategy,
+    "rotation": RotationStrategy,
 }
 
 

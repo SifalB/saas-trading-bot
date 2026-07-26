@@ -10,6 +10,11 @@ const BOT_TYPES = [
   { type: 'grid', label: 'Grid Trading', desc: 'Buy low / sell high within a fixed price grid. Best for sideways markets.' },
   { type: 'scalp', label: 'Scalping', desc: 'RSI + EMA momentum strategy. Fast in-and-out trades on 1m candles.' },
   { type: 'corr', label: 'Correlation', desc: 'Trade altcoins when BTC makes a significant move. Follow the leader.' },
+  { type: 'mtf', label: 'MTF Confluence', desc: '15m trend + 5m momentum + 1m entry must all align. Selective, high conviction.' },
+  { type: 'breakout', label: 'Donchian Breakout', desc: 'Buy 20-bar highs on 1h and ride with an ATR trailing stop. Trend-follower.' },
+  { type: 'dip', label: 'Dip Buyer (RSI-2)', desc: 'Buy sharp oversold dips below the lower Bollinger band in an uptrend, sell the bounce.' },
+  { type: 'volbreak', label: 'Volatility Breakout', desc: 'Buy explosive range expansion (k x ATR above the session open) with volume.' },
+  { type: 'rotation', label: 'Momentum Rotation', desc: 'Hold whichever coin has the strongest momentum; rotate as leadership changes.' },
 ];
 
 export default function StrategyPage() {
@@ -58,7 +63,7 @@ export default function StrategyPage() {
         </div>
 
         {/* Bot type cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 40 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 40 }}>
           {BOT_TYPES.map(bt => (
             <div key={bt.type} onClick={() => { setType(bt.type); setCreating(true); }}
               style={{
