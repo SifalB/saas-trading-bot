@@ -110,7 +110,8 @@ class DipStrategy:
                             await self._close(symbol, price, "STOP_LOSS")
                         elif price >= pos["target"]:
                             await self._close(symbol, price, "TAKE_PROFIT")
-                        elif now - pos["entry_time_ts"] >= self.timeout_seconds:
+                        elif (now - pos["entry_time_ts"] >= self.timeout_seconds
+                              and not costs.in_dead_zone(pos["entry_price"], price)):
                             await self._close(symbol, price, "TIMEOUT")
                     else:
                         uptrend = prev_close > sma_trend

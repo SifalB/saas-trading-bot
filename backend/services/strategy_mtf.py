@@ -45,7 +45,8 @@ class MtfStrategy:
         self.vol_mult: float     = config.get("volume_multiplier", 1.5)
 
         self.stop_loss_pct: float       = config.get("stop_loss_pct", 0.0025)
-        self.take_profit_pct: float     = costs.enforce_tp(config.get("take_profit_pct", 0.004))
+        self.take_profit_pct: float     = costs.viable_tp(
+            config.get("take_profit_pct", 0.004), config.get("stop_loss_pct", 0.0025))
         self.breakeven_trigger: float   = config.get("breakeven_trigger_pct", 0.0015)
         self.breakeven_buffer: float    = config.get("breakeven_buffer_pct", 0.0005)
         self.timeout_seconds: int       = config.get("trade_timeout_seconds", 300)
@@ -146,7 +147,9 @@ class MtfStrategy:
                         reason = "STOP_LOSS"
                     elif pnl_pct >= self.take_profit_pct:
                         reason = "TAKE_PROFIT"
-                    elif elapsed >= self.timeout_seconds:
+                    # Don't book a guaranteed loss: wait out the dead zone
+                    # where the gain is real but too small to cover costs.
+                    elif elapsed >= self.timeout_seconds and not costs.in_dead_zone(entry, price):
                         reason = "TIMEOUT"
 
                     if reason:

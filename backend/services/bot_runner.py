@@ -119,6 +119,26 @@ async def run_bot(bot_id: int) -> None:
     await _set_status(bot_id, "running")
     await _save_log(bot_id, f"Bot {bot.name} ({bot.type}) started — paper={bot.paper_mode}")
 
+    # Report the post-cost economics up front, and refuse to trade a setup
+    # that cannot pay for itself no matter how well it is executed.
+    tp = bot.config.get("take_profit_pct")
+    sl = bot.config.get("stop_loss_pct")
+    if tp and sl:
+        adjusted = costs.viable_tp(tp, sl)
+        need = costs.breakeven_win_rate(adjusted, sl) * 100
+        await _save_log(bot_id, (
+            f"Costs {costs.ROUND_TRIP_PCT*100:.2f}% round trip | "
+            f"TP {tp*100:.2f}% -> {adjusted*100:.2f}% | SL {sl*100:.2f}% | "
+            f"break-even win rate {need:.0f}%"
+        ))
+        if not costs.is_viable(adjusted, sl):
+            await _save_log(bot_id, (
+                "REFUSING TO TRADE: after fees this setup needs an unrealistic "
+                f"{need:.0f}% win rate. Widen the take-profit or tighten the stop."
+            ))
+            await _set_status(bot_id, "error")
+            return
+
     strategy = strategy_cls(
         bot_id=bot_id,
         user_id=bot.user_id,
