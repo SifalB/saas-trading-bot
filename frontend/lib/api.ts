@@ -103,6 +103,13 @@ export type StrategyStat = {
   bot_count: number; running: boolean;
   initial_balance: number; current_balance: number;
   return_pct: number; vs_benchmark: number;
+  profit_factor: number; expectancy: number;
+  avg_win: number; avg_loss: number; max_drawdown_pct: number;
+};
+
+export type Equity = {
+  points: { t: string; value: number }[];
+  max_drawdown: number; max_drawdown_pct: number; has_history: boolean;
 };
 
 export type Portfolio = {
@@ -114,6 +121,7 @@ export type Portfolio = {
 export const dashboard = {
   stats: () => req<Stats>('/dashboard/stats'),
   portfolio: () => req<Portfolio>('/dashboard/portfolio'),
+  equity: (hours = 168) => req<Equity>(`/dashboard/equity?hours=${hours}`),
   compare: () => req<BotStats[]>('/dashboard/compare'),
   strategies: () => req<StrategyStat[]>('/dashboard/strategies'),
 };

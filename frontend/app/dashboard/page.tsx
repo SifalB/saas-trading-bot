@@ -5,22 +5,13 @@ import Nav from '@/components/Nav';
 import PortfolioChart from '@/components/PortfolioChart';
 import StrategyCard from '@/components/StrategyCard';
 import Card, { CardHead, CardLabel } from '@/components/Card';
-import { dashboard, auth, bots as botApi, isLoggedIn, type Stats, type StrategyStat, type Trade, type Portfolio, trades as tradesApi } from '@/lib/api';
-
-function seed5000(pnl: number) {
-  const base = 5000;
-  const pts = Array.from({ length: 28 }, (_, i) => ({
-    label: `Day ${i + 1}`,
-    value: +(base + (pnl / 28) * i + Math.sin(i) * 20).toFixed(2),
-  }));
-  pts.push({ label: 'Today', value: +(base + pnl).toFixed(2) });
-  return pts;
-}
+import { dashboard, auth, bots as botApi, isLoggedIn, type Stats, type StrategyStat, type Trade, type Portfolio, type Equity, trades as tradesApi } from '@/lib/api';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [pf, setPf] = useState<Portfolio | null>(null);
+  const [eq, setEq] = useState<Equity | null>(null);
   const [strategies, setStrategies] = useState<StrategyStat[]>([]);
   const [recentTrades, setRecentTrades] = useState<Trade[]>([]);
   const [email, setEmail] = useState('');
@@ -41,14 +32,15 @@ export default function DashboardPage() {
 
   async function load() {
     try {
-      const [s, p, str, t, me] = await Promise.all([
+      const [s, p, e, str, t, me] = await Promise.all([
         dashboard.stats(),
         dashboard.portfolio(),
+        dashboard.equity(),
         dashboard.strategies(),
         tradesApi.list({ limit: 6 }),
         auth.me(),
       ]);
-      setStats(s); setPf(p); setStrategies(str); setRecentTrades(t); setEmail(me.email);
+      setStats(s); setPf(p); setEq(e); setStrategies(str); setRecentTrades(t); setEmail(me.email);
     } catch {
       router.push('/login');
     } finally {
@@ -68,8 +60,11 @@ export default function DashboardPage() {
   );
 
   const totalPnl = stats?.total_pnl ?? 0;
-  const chartData = seed5000(totalPnl);
-  const balance = 5000 + totalPnl;
+  const chartData = (eq?.points ?? []).map(p => ({
+    label: new Date(p.t).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    value: p.value,
+  }));
+  const balance = chartData.length ? chartData[chartData.length - 1].value : (pf?.equity ?? 0);
   const activeStrategies = strategies.filter(s => s.running).length;
   const anyRunning = activeStrategies > 0;
   const sign = (n: number) => (n >= 0 ? '+' : '');
@@ -114,9 +109,23 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Portfolio chart */}
+        {/* Portfolio chart — real recorded equity, never synthesised */}
         <div style={{ marginBottom: 40 }}>
-          <PortfolioChart data={chartData} totalPnl={totalPnl} balance={balance} />
+          {eq?.has_history ? (
+            <>
+              <PortfolioChart data={chartData} totalPnl={totalPnl} balance={balance} />
+              <div style={{ fontFamily: 'Geist Mono', fontSize: 11, color: 'var(--muted)', marginTop: 10 }}>
+                Max drawdown {eq.max_drawdown_pct.toFixed(2)}% (-${eq.max_drawdown.toFixed(2)}) · recorded every 5 min
+              </div>
+            </>
+          ) : (
+            <Card>
+              <CardHead><CardLabel>Equity curve</CardLabel></CardHead>
+              <p style={{ color: 'var(--muted)', fontSize: 14, fontFamily: 'Geist Mono', margin: 0 }}>
+                Building history — equity is recorded every 5 minutes. The curve appears once there are at least two snapshots.
+              </p>
+            </Card>
+          )}
         </div>
 
         {/* ── STRATEGIES ───────────────────────────────────────── */}

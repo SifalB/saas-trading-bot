@@ -10,10 +10,24 @@ from backend.models.trade import Trade
 from backend.models.user import User
 from backend.schemas.bot import BotStats, StrategyStats, STRATEGY_LABELS
 from backend.schemas.trade import DashboardStats
+from backend.services import metrics
 from backend.workers import task_manager
 from .deps import get_current_user
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
+
+
+def _risk(trades, starting: float) -> dict:
+    """Risk profile from a strategy's closed trades, oldest first."""
+    pnls = [t.pnl_usdt for t in sorted(trades, key=lambda t: t.exit_time)]
+    summary = metrics.summarize(pnls, starting)
+    return {
+        "profit_factor": 0.0 if summary["profit_factor"] == float("inf") else summary["profit_factor"],
+        "expectancy": summary["expectancy"],
+        "avg_win": summary["avg_win"],
+        "avg_loss": summary["avg_loss"],
+        "max_drawdown_pct": summary["max_drawdown_pct"],
+    }
 
 
 @router.get("/stats", response_model=DashboardStats)
@@ -97,6 +111,46 @@ async def portfolio(
     }
 
 
+@router.get("/equity")
+async def equity(
+    hours: int = 168,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Real recorded equity history, aggregated across all bots per timestamp."""
+    from collections import defaultdict
+    from datetime import timedelta
+
+    from backend.models.equity import EquitySnapshot
+
+    since = datetime.now(UTC) - timedelta(hours=hours)
+    result = await db.execute(
+        select(EquitySnapshot)
+        .where(EquitySnapshot.user_id == current_user.id)
+        .where(EquitySnapshot.recorded_at >= since)
+        .order_by(EquitySnapshot.recorded_at)
+    )
+    snapshots = result.scalars().all()
+
+    totals: dict[datetime, float] = defaultdict(float)
+    for snap in snapshots:
+        totals[snap.recorded_at] += snap.equity
+
+    points = [
+        {"t": ts.isoformat(), "value": round(v, 2)}
+        for ts, v in sorted(totals.items())
+    ]
+    curve = [p["value"] for p in points]
+    dd_abs, dd_pct = metrics.max_drawdown(curve)
+
+    return {
+        "points": points,
+        "max_drawdown": round(dd_abs, 2),
+        "max_drawdown_pct": round(dd_pct * 100, 2),
+        "has_history": len(points) >= 2,
+    }
+
+
 @router.get("/strategies", response_model=list[StrategyStats])
 async def strategies(
     current_user: User = Depends(get_current_user),
@@ -144,6 +198,7 @@ async def strategies(
             current_balance=round(initial + total_pnl, 4),
             return_pct=round(total_pnl / (initial or 5000.0) * 100, 3),
             vs_benchmark=0.0,   # filled in below once the benchmark is known
+            **_risk(real, initial or 5000.0),
         ))
 
     # Every active strategy is measured against buying the basket and waiting.

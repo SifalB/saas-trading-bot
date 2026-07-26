@@ -47,7 +47,13 @@ async def _resume_running_bots() -> None:
 async def lifespan(app: FastAPI):
     await init_db()
     await _resume_running_bots()
-    yield
+
+    from backend.workers import equity_recorder
+    equity_recorder.start()
+    try:
+        yield
+    finally:
+        await equity_recorder.stop()
 
 
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)

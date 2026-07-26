@@ -41,6 +41,11 @@ class StrategyStats(BaseModel):
     current_balance: float
     return_pct: float = 0.0
     vs_benchmark: float = 0.0
+    profit_factor: float = 0.0
+    expectancy: float = 0.0
+    avg_win: float = 0.0
+    avg_loss: float = 0.0
+    max_drawdown_pct: float = 0.0
 
 
 class BotUpdate(BaseModel):

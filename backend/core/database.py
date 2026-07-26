@@ -28,7 +28,7 @@ async def get_db() -> AsyncSession:
 
 async def init_db() -> None:
     """Create all tables on startup, then drop obsolete legacy columns."""
-    from backend.models import user, bot, trade  # noqa: F401 — registers models
+    from backend.models import user, bot, trade, equity  # noqa: F401 — registers models
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         # One-time forward migration: relax the old single-tenant schema.

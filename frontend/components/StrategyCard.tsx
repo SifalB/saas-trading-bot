@@ -68,6 +68,23 @@ export default function StrategyCard({ s }: { s: StrategyStat }) {
         <MiniStat label="Total trades" value={String(s.total_trades)} />
       </div>
 
+      {/* Risk profile — what win rate alone cannot tell you */}
+      {s.total_trades > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
+          <MiniStat
+            label="Profit factor"
+            value={s.profit_factor ? s.profit_factor.toFixed(2) : '—'}
+            color={s.profit_factor >= 1.3 ? 'var(--green)' : s.profit_factor && s.profit_factor < 1 ? 'var(--red)' : undefined}
+          />
+          <MiniStat label="Avg win / loss" value={`$${s.avg_win.toFixed(2)} / $${Math.abs(s.avg_loss).toFixed(2)}`} />
+          <MiniStat
+            label="Max drawdown"
+            value={`${s.max_drawdown_pct.toFixed(1)}%`}
+            color={s.max_drawdown_pct > 20 ? 'var(--red)' : undefined}
+          />
+        </div>
+      )}
+
       {s.bot_count === 0 && (
         <Link href="/strategy" style={{ fontFamily: 'Geist Mono', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent)', textDecoration: 'none' }}>
           Create a bot →
