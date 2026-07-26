@@ -65,7 +65,7 @@ export default function PortfolioChart({ data, totalPnl, balance }: {
             <XAxis dataKey="label" tick={{ fontFamily: 'Geist Mono', fontSize: 11, fill: 'var(--muted)' }} axisLine={false} tickLine={false} />
             <Tooltip
               contentStyle={{ background: 'var(--ink)', border: 'none', borderRadius: 8, color: '#fff', fontFamily: 'Geist Mono', fontSize: 12 }}
-              formatter={(v: number) => [`$${v.toFixed(2)}`, 'Balance']}
+              formatter={(v) => [`$${Number(v).toFixed(2)}`, 'Balance']}
             />
             <Area type="monotone" dataKey="value" stroke="var(--accent)" strokeWidth={2.2} fill="url(#grad)" dot={false} />
           </AreaChart>

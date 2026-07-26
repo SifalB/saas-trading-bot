@@ -1,0 +1,8 @@
+node_modules
+.next
+npm-debug.log*
+# Exclude local env so the build uses Railway's NEXT_PUBLIC_API_URL, not localhost.
+.env*
+Dockerfile
+.dockerignore
+README.md
