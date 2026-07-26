@@ -243,7 +243,7 @@ def _fetch_dumps(symbol: str, days: int) -> pd.DataFrame | None:
         try:
             with urllib.request.urlopen(url, timeout=60) as resp:
                 frames.append(_read_dump(resp.read()))
-            print(f"\r  {symbol}: {i}/{len(urls)} archives…", end="", flush=True)
+            print(f"\r  {symbol}: {i}/{len(urls)} archives...", end="", flush=True)
         except urllib.error.HTTPError as e:
             if e.code != 404:  # 404 just means that day/month isn't published
                 print(f"\n  {symbol}: {url.rsplit('/', 1)[-1]} -> HTTP {e.code}")
@@ -268,9 +268,9 @@ async def fetch_history(symbols: list[str], days: int, use_cache: bool = True) -
 
     try:
         for symbol in symbols:
-            cache = CACHE_DIR / f"{symbol.replace('/', '')}_{days}d_1m.parquet"
+            cache = CACHE_DIR / f"{symbol.replace('/', '')}_{days}d_1m.pkl"
             if use_cache and cache.exists():
-                out[symbol] = pd.read_parquet(cache)
+                out[symbol] = pd.read_pickle(cache)
                 print(f"  {symbol}: {len(out[symbol]):,} candles (cached)")
                 continue
 
@@ -281,7 +281,7 @@ async def fetch_history(symbols: list[str], days: int, use_cache: bool = True) -
                 dumped = (dumped.drop_duplicates(subset="timestamp")
                           .sort_values("timestamp").reset_index(drop=True))
                 dumped["dt"] = pd.to_datetime(dumped["timestamp"], unit="ms", utc=True)
-                dumped.to_parquet(cache)
+                dumped.to_pickle(cache)
                 out[symbol] = dumped
                 print(f"\r  {symbol}: {len(dumped):,} candles (archives)      ")
                 continue
@@ -296,12 +296,12 @@ async def fetch_history(symbols: list[str], days: int, use_cache: bool = True) -
                 since = batch[-1][0] + 60_000
                 if since > datetime.now(UTC).timestamp() * 1000:
                     break
-                print(f"\r  {symbol}: {len(rows):,} candles…", end="", flush=True)
+                print(f"\r  {symbol}: {len(rows):,} candles...", end="", flush=True)
 
             df = pd.DataFrame(rows, columns=["timestamp", "open", "high", "low", "close", "volume"])
             df = df.drop_duplicates(subset="timestamp").sort_values("timestamp").reset_index(drop=True)
             df["dt"] = pd.to_datetime(df["timestamp"], unit="ms", utc=True)
-            df.to_parquet(cache)
+            df.to_pickle(cache)
             out[symbol] = df
             print(f"\r  {symbol}: {len(df):,} candles (downloaded)")
     finally:
@@ -386,7 +386,7 @@ async def run_all(days: int = 30, symbols: list[str] | None = None,
 
     span_start = min(df["dt"].iloc[0] for df in data.values())
     span_end = max(df["dt"].iloc[-1] for df in data.values())
-    print(f"\nPeriod: {span_start:%Y-%m-%d} → {span_end:%Y-%m-%d}")
+    print(f"\nPeriod: {span_start:%Y-%m-%d} -> {span_end:%Y-%m-%d}")
 
     # How the market itself moved, for context.
     for symbol, df in data.items():
@@ -394,7 +394,7 @@ async def run_all(days: int = 30, symbols: list[str] | None = None,
         print(f"  {symbol} {change:+.1f}%")
 
     results = []
-    print("\nReplaying strategies…")
+    print("\nReplaying strategies...")
     for stype in STRATEGY_MAP:
         summary = await run_strategy(stype, data, starting_balance)
         results.append(summary)

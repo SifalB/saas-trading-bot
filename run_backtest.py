@@ -21,7 +21,7 @@ from backend.services import backtest  # noqa: E402
 
 
 def _row(r: dict) -> str:
-    pf = "∞" if r["profit_factor"] == float("inf") else f"{r['profit_factor']:.2f}"
+    pf = "inf" if r["profit_factor"] == float("inf") else f"{r['profit_factor']:.2f}"
     return (
         f"{r['label']:<24} {r['return_pct']:>+8.2f}% {r['total_pnl']:>+10.2f} "
         f"{r['trades']:>7} {r['win_rate']:>7.1f}% {pf:>7} "
