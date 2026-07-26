@@ -153,9 +153,9 @@ export default function DashboardPage() {
                     {t.reason === 'TAKE_PROFIT' ? 'TP' : t.reason === 'STOP_LOSS' ? 'SL' : 'EXIT'}
                   </div>
                   <div>
-                    <div style={{ fontSize: 14 }}>{t.symbol} — {t.reason}</div>
+                    <div style={{ fontSize: 14 }}>{t.symbol} · <span style={{ color: 'var(--muted)' }}>{t.bot_name}</span></div>
                     <div style={{ fontFamily: 'Geist Mono', fontSize: 11, letterSpacing: '0.05em', color: 'var(--muted)', marginTop: 3 }}>
-                      {new Date(t.exit_time).toLocaleString()}
+                      {t.reason} · {new Date(t.exit_time).toLocaleString()}
                     </div>
                   </div>
                   <div style={{ fontFamily: 'Geist Mono', fontSize: 13, color: isWin ? 'var(--green)' : 'var(--red)' }}>

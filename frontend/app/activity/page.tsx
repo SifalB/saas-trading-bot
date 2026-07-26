@@ -14,6 +14,13 @@ const REASON_COLORS: Record<string, { bg: string; color: string; label: string }
   SIGNAL:      { bg: 'rgba(20,180,130,0.12)', color: 'var(--green)', label: 'SG' },
 };
 
+const STRATEGY_META: Record<string, { label: string; color: string }> = {
+  mtf:   { label: 'MTF',    color: 'oklch(0.55 0.14 200)' },
+  scalp: { label: 'Scalp',  color: 'oklch(0.6 0.15 280)' },
+  grid:  { label: 'Grid',   color: 'oklch(0.62 0.14 160)' },
+  corr:  { label: 'Corr',   color: 'oklch(0.65 0.15 60)' },
+};
+
 export default function ActivityPage() {
   const router = useRouter();
   const [allTrades, setAllTrades] = useState<Trade[]>([]);
@@ -68,7 +75,7 @@ export default function ActivityPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {['Type', 'Symbol', 'Entry', 'Exit', 'P&L', 'Time'].map(h => (
+                  {['Type', 'Strategy', 'Symbol', 'Entry', 'Exit', 'P&L', 'Time'].map(h => (
                     <th key={h} style={{ textAlign: 'left', padding: '14px 0', borderBottom: '1px solid var(--line)', fontFamily: 'Geist Mono', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', fontWeight: 500 }}>
                       {h}
                     </th>
@@ -85,6 +92,17 @@ export default function ActivityPage() {
                         <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: 6, background: tag.bg, color: tag.color, fontFamily: 'Geist Mono', fontSize: 11 }}>
                           {tag.label}
                         </span>
+                      </td>
+                      <td style={{ padding: '14px 0', borderBottom: '1px solid var(--line)' }}>
+                        {(() => {
+                          const m = STRATEGY_META[t.bot_type] ?? { label: t.bot_name || t.bot_type, color: 'var(--muted)' };
+                          return (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: 'Geist Mono', fontSize: 12 }}>
+                              <span style={{ width: 8, height: 8, borderRadius: '50%', background: m.color, display: 'inline-block' }} />
+                              {m.label}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td style={{ padding: '14px 0', borderBottom: '1px solid var(--line)', fontSize: 14, fontWeight: 500 }}>{t.symbol}</td>
                       <td style={{ padding: '14px 0', borderBottom: '1px solid var(--line)', fontFamily: 'Geist Mono', fontSize: 13 }}>${t.entry_price.toLocaleString(undefined, { maximumFractionDigits: 4 })}</td>

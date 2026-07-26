@@ -6,6 +6,8 @@ from pydantic import BaseModel
 class TradeResponse(BaseModel):
     id: int
     bot_id: int
+    bot_type: str
+    bot_name: str
     symbol: str
     entry_price: float
     exit_price: float
