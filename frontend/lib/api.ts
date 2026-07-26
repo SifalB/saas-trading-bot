@@ -1,4 +1,6 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Same-origin by default: the FastAPI backend serves this app and exposes the
+// API under /api. For split local dev, set NEXT_PUBLIC_API_URL (e.g. http://localhost:8000/api).
+const BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;

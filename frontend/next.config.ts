@@ -1,9 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Produce a minimal self-contained server build (.next/standalone)
-  // for a small Docker image on Railway.
-  output: "standalone",
+  // Static HTML/JS export (./out) so the FastAPI backend can serve the
+  // frontend from the same instance — one service, same origin, no CORS.
+  output: "export",
+  trailingSlash: true,
+  images: { unoptimized: true },
 };
 
 export default nextConfig;

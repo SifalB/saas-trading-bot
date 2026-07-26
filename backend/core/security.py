@@ -7,7 +7,15 @@ from passlib.context import CryptContext
 from .config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-_fernet = Fernet(settings.FERNET_KEY.encode())
+
+try:
+    _fernet = Fernet(settings.FERNET_KEY.strip().encode())
+except Exception as exc:  # noqa: BLE001 — turn a cryptic traceback into a clear message
+    raise RuntimeError(
+        "FERNET_KEY is missing or invalid. It must be a 32-byte url-safe "
+        "base64 key (44 chars ending in '='). Generate one with: "
+        "python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+    ) from exc
 
 
 # ── Passwords ─────────────────────────────────────────────────────────────────

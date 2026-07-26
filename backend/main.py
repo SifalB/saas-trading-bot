@@ -1,4 +1,5 @@
 import asyncio
+import os
 import sys
 
 # asyncpg requires SelectorEventLoop on Windows
@@ -6,9 +7,11 @@ if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from backend.core.config import settings
 from backend.core.database import init_db
@@ -31,12 +34,54 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(bots.router)
-app.include_router(trades.router)
-app.include_router(dashboard.router)
+# All API routes live under /api so they never collide with frontend routes
+# (the app has its own /dashboard, /activity, ... pages) when served same-origin.
+API_PREFIX = "/api"
+app.include_router(auth.router, prefix=API_PREFIX)
+app.include_router(bots.router, prefix=API_PREFIX)
+app.include_router(trades.router, prefix=API_PREFIX)
+app.include_router(dashboard.router, prefix=API_PREFIX)
 
 
+@app.get("/api/health")
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+# ── Serve the exported Next.js frontend (single-instance deploy) ───────────────
+# In the Docker image the static export is copied to FRONTEND_DIR. When it is
+# absent (backend-only local dev), these routes simply don't get registered.
+FRONTEND_DIR = Path(os.getenv("FRONTEND_DIR", "frontend_static")).resolve()
+
+if FRONTEND_DIR.is_dir():
+    _INDEX = FRONTEND_DIR / "index.html"
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        # Never let the SPA catch-all shadow the API.
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Not found")
+
+        # Resolve safely inside FRONTEND_DIR (block path traversal).
+        try:
+            target = (FRONTEND_DIR / full_path).resolve()
+            target.relative_to(FRONTEND_DIR)
+        except (ValueError, RuntimeError):
+            raise HTTPException(status_code=404, detail="Not found")
+
+        # 1) exact static asset (js/css/svg/…)
+        if full_path and target.is_file():
+            return FileResponse(target)
+        # 2) exported route folder → route/index.html  (trailingSlash: true)
+        page = target / "index.html"
+        if page.is_file():
+            return FileResponse(page)
+        # 3) root
+        if not full_path:
+            return FileResponse(_INDEX)
+        # 4) fallback to Next's 404 page, else the SPA shell
+        not_found = FRONTEND_DIR / "404.html"
+        if not_found.is_file():
+            return FileResponse(not_found, status_code=404)
+        return FileResponse(_INDEX)
