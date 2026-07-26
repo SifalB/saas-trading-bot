@@ -26,5 +26,30 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
+    @property
+    def async_database_url(self) -> str:
+        """Normalize whatever the host injects into an asyncpg URL.
+
+        Railway/Heroku Postgres plugins hand out `postgres://` or
+        `postgresql://` URLs, but create_async_engine needs the
+        `postgresql+asyncpg://` driver prefix. Also strip libpq-style
+        `sslmode`/`ssl` query params that asyncpg does not understand.
+        """
+        url = self.DATABASE_URL
+        if url.startswith("postgres://"):
+            url = "postgresql://" + url[len("postgres://"):]
+        if url.startswith("postgresql://"):
+            url = "postgresql+asyncpg://" + url[len("postgresql://"):]
+
+        # asyncpg rejects libpq's sslmode/ssl query params — drop them.
+        if "?" in url:
+            base, _, query = url.partition("?")
+            kept = [
+                p for p in query.split("&")
+                if p and p.split("=")[0].lower() not in ("sslmode", "ssl")
+            ]
+            url = base + ("?" + "&".join(kept) if kept else "")
+        return url
+
 
 settings = Settings()
