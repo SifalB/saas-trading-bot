@@ -76,9 +76,8 @@ class ScalpStrategy:
                             reason = "STOP_LOSS"
                         if reason:
                             pos = self.positions.pop(symbol)
-                            proceeds = pos["size"] * price
-                            self.balance += proceeds
-                            pnl = proceeds - pos["size"] * entry
+                            self.balance += costs.net_proceeds(entry, price, pos["size"])
+                            pnl = costs.net_pnl(entry, price, pos["size"])[0]
                             await self.log(self.bot_id,
                                 f"[SCALP] SELL {symbol} @ ${price:,.4f} | {reason} | PnL: ${pnl:+.2f}")
                             await self.record_trade(self.bot_id, self.user_id, {
@@ -101,9 +100,8 @@ class ScalpStrategy:
                     elif signal == "SELL" and symbol in self.positions:
                         pos = self.positions.pop(symbol)
                         entry = pos["entry_price"]
-                        proceeds = pos["size"] * price
-                        self.balance += proceeds
-                        pnl = proceeds - pos["size"] * entry
+                        self.balance += costs.net_proceeds(entry, price, pos["size"])
+                        pnl = costs.net_pnl(entry, price, pos["size"])[0]
                         pnl_pct = pnl / (pos["size"] * entry)
                         await self.log(self.bot_id,
                             f"[SCALP] SELL {symbol} @ ${price:,.4f} | SIGNAL | PnL: ${pnl:+.2f}")

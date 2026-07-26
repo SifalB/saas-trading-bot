@@ -14,6 +14,8 @@ import time
 from datetime import datetime, UTC
 from typing import Callable
 
+from . import costs
+
 import pandas as pd
 
 
@@ -56,9 +58,8 @@ class BreakoutStrategy:
 
     async def _close(self, symbol: str, price: float, reason: str) -> None:
         pos = self.positions.pop(symbol)
-        proceeds = pos["size"] * price
-        pnl = proceeds - pos["size"] * pos["entry_price"]
-        self.balance += proceeds
+        pnl = costs.net_pnl(pos["entry_price"], price, pos["size"])[0]
+        self.balance += costs.net_proceeds(pos["entry_price"], price, pos["size"])
         await self.log(self.bot_id,
             f"[BREAKOUT] EXIT {symbol} @ ${price:,.4f} | {reason} | PnL: ${pnl:+.2f}")
         await self.record_trade(self.bot_id, self.user_id, {
@@ -98,11 +99,21 @@ class BreakoutStrategy:
                         if trail > pos["stop_loss"]:
                             pos["stop_loss"] = trail
                         if price <= pos["stop_loss"]:
+                            # Risk control — always honoured, never deferred.
                             await self._close(symbol, price, "STOP_LOSS")
-                        elif price < exit_low:
+                        elif price < exit_low and not costs.in_dead_zone(pos["entry_price"], price):
+                            # Trend-reversal exit, but not for a gain too small
+                            # to cover the round trip.
                             await self._close(symbol, price, "CHANNEL_EXIT")
                     else:
-                        if price > entry_high and self.balance > 10:
+                        # A trailing stop tighter than the round trip means the
+                        # exit cannot clear its own costs — skip such setups.
+                        trail_pct = (atr * self.atr_trail_mult) / price if price else 0
+                        if trail_pct < costs.ROUND_TRIP_PCT:
+                            await self.log(self.bot_id,
+                                f"[BREAKOUT] {symbol} skipped — ATR trail {trail_pct*100:.3f}% "
+                                f"below round-trip cost {costs.ROUND_TRIP_PCT*100:.2f}%")
+                        elif price > entry_high and self.balance > 10:
                             spend = self.balance * self.trade_size_pct
                             size = spend / price
                             self.balance -= spend

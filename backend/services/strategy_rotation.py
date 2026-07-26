@@ -13,6 +13,8 @@ import asyncio
 from datetime import datetime, UTC
 from typing import Callable
 
+from . import costs
+
 import pandas as pd
 
 
@@ -32,7 +34,10 @@ class RotationStrategy:
         self.momentum_lookback: int = config.get("momentum_lookback", 24)  # bars
         self.min_momentum: float    = config.get("min_momentum", 0.0)      # require > 0 to hold
         self.rebalance_seconds: int = config.get("rebalance_seconds", 3600)
-        self.switch_margin: float   = config.get("switch_margin", 0.005)   # 0.5% edge to rotate
+        # Rotating pays to exit one coin and enter another, so the momentum
+        # edge must beat that full round trip before a switch is worth making.
+        self.switch_margin: float   = max(
+            config.get("switch_margin", 0.005), costs.min_profit_pct())
         self.stop_loss_pct: float   = config.get("stop_loss_pct", 0.05)
         self.trade_size_pct: float  = config.get("trade_size_pct", 0.95)   # concentrated by design
         self.poll_interval: int     = config.get("poll_interval", 60)
@@ -54,9 +59,8 @@ class RotationStrategy:
     async def _sell(self, price: float, reason: str) -> None:
         pos = self.holding
         self.holding = None
-        proceeds = pos["size"] * price
-        pnl = proceeds - pos["size"] * pos["entry_price"]
-        self.balance += proceeds
+        pnl = costs.net_pnl(pos["entry_price"], price, pos["size"])[0]
+        self.balance += costs.net_proceeds(pos["entry_price"], price, pos["size"])
         await self.log(self.bot_id,
             f"[ROTATION] SELL {pos['symbol']} @ ${price:,.4f} | {reason} | PnL: ${pnl:+.2f}")
         await self.record_trade(self.bot_id, self.user_id, {
@@ -134,7 +138,16 @@ class RotationStrategy:
                             held_mom = scores.get(self.holding["symbol"], -1.0)
                             if best_mom - held_mom > self.switch_margin:
                                 t_old = await self.exchange.fetch_ticker(self.holding["symbol"])
-                                await self._sell(float(t_old["last"]), "ROTATE")
+                                old_px = float(t_old["last"])
+                                # Don't crystallise a sub-fee gain just to chase
+                                # a marginally stronger coin.
+                                if costs.in_dead_zone(self.holding["entry_price"], old_px):
+                                    await self.log(self.bot_id,
+                                        f"[ROTATION] Holding {self.holding['symbol']} — rotating now "
+                                        f"would book a gain too small to cover costs")
+                                    await asyncio.sleep(self.poll_interval)
+                                    continue
+                                await self._sell(old_px, "ROTATE")
                                 t_new = await self.exchange.fetch_ticker(best)
                                 await self._buy(best, float(t_new["last"]), best_mom)
             except Exception as e:  # noqa: BLE001

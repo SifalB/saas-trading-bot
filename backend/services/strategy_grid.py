@@ -26,6 +26,9 @@ class GridStrategy:
         self.poll_interval: int = config.get("poll_interval", 10)
 
         self.grids: dict[str, dict] = {}  # symbol -> grid state
+        # Cash actually available. Without this the bot opens a buy at every
+        # level it touches with no idea whether the money exists.
+        self.balance: float = config.get("initial_balance", self.investment)
 
     def _build_grid(self, symbol: str, price: float) -> dict:
         step = (price * self.range_pct * 2) / (self.levels * 2)
@@ -49,8 +52,8 @@ class GridStrategy:
         forced_pnl = 0.0
         for i, buy in list(grid["open_buys"].items()):
             cost = buy["size"] * buy["entry_price"]
-            proceeds = buy["size"] * price
-            pnl = proceeds - cost
+            pnl = costs.net_pnl(buy["entry_price"], price, buy["size"])[0]
+            self.balance += costs.net_proceeds(buy["entry_price"], price, buy["size"])
             forced_pnl += pnl
             grid["total_pnl"] += pnl
             await self.record_trade(self.bot_id, self.user_id, {
@@ -70,9 +73,17 @@ class GridStrategy:
             next_price = grid["prices"][i + 1]
 
             if level_price <= price < next_price and i not in grid["open_buys"]:
-                size = grid["inv_per_grid"] / price
+                spend = grid["inv_per_grid"]
+                if spend > self.balance:
+                    await self.log(self.bot_id,
+                        f"[GRID] {symbol} level {i} skipped — needs ${spend:,.2f}, "
+                        f"only ${self.balance:,.2f} cash left")
+                    continue
+                size = spend / price
+                self.balance -= spend
                 grid["open_buys"][i] = {"size": size, "entry_price": price, "entry_time": datetime.now(UTC)}
-                await self.log(self.bot_id, f"[GRID] BUY  {symbol} level {i} @ ${price:,.4f}")
+                await self.log(self.bot_id,
+                    f"[GRID] BUY  {symbol} level {i} @ ${price:,.4f} | cash left ${self.balance:,.2f}")
 
             elif price >= next_price and i in grid["open_buys"]:
                 # Never book a "win" that its own fees would eat. Hold the
@@ -81,8 +92,8 @@ class GridStrategy:
                     continue
                 buy = grid["open_buys"].pop(i)
                 cost = buy["size"] * buy["entry_price"]
-                proceeds = buy["size"] * price
-                pnl = proceeds - cost
+                pnl = costs.net_pnl(buy["entry_price"], price, buy["size"])[0]
+                self.balance += costs.net_proceeds(buy["entry_price"], price, buy["size"])
                 grid["total_pnl"] += pnl
                 await self.log(self.bot_id,
                     f"[GRID] SELL {symbol} level {i} @ ${price:,.4f} | PnL: ${pnl:+.4f}")

@@ -61,9 +61,8 @@ class VolBreakStrategy:
 
     async def _close(self, symbol: str, price: float, reason: str) -> None:
         pos = self.positions.pop(symbol)
-        proceeds = pos["size"] * price
-        pnl = proceeds - pos["size"] * pos["entry_price"]
-        self.balance += proceeds
+        pnl = costs.net_pnl(pos["entry_price"], price, pos["size"])[0]
+        self.balance += costs.net_proceeds(pos["entry_price"], price, pos["size"])
         await self.log(self.bot_id,
             f"[VOLBREAK] EXIT {symbol} @ ${price:,.4f} | {reason} | PnL: ${pnl:+.2f}")
         await self.record_trade(self.bot_id, self.user_id, {

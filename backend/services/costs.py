@@ -92,6 +92,16 @@ def trade_costs(entry_price: float, exit_price: float, size: float) -> float:
     return notional * (settings.TRADING_FEE_RATE + settings.SLIPPAGE_RATE)
 
 
+def net_proceeds(entry_price: float, exit_price: float, size: float) -> float:
+    """Cash actually returned to the wallet when closing a position.
+
+    Strategies must credit this, not the gross `size * price`. Crediting gross
+    makes a bot believe it holds more cash than it does — the error compounds
+    with every trade and silently inflates position sizes.
+    """
+    return size * exit_price - trade_costs(entry_price, exit_price, size)
+
+
 def net_pnl(entry_price: float, exit_price: float, size: float) -> tuple[float, float]:
     """Return (net_pnl_usdt, costs_usdt) for a round trip."""
     gross = size * (exit_price - entry_price)

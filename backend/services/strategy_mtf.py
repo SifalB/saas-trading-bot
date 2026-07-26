@@ -153,9 +153,8 @@ class MtfStrategy:
                         reason = "TIMEOUT"
 
                     if reason:
-                        proceeds = pos["size"] * price
-                        pnl = proceeds - pos["size"] * entry
-                        self.balance += proceeds
+                        pnl = costs.net_pnl(entry, price, pos["size"])[0]
+                        self.balance += costs.net_proceeds(entry, price, pos["size"])
                         del self.positions[symbol]
                         await self.log(self.bot_id,
                             f"[MTF] EXIT {symbol} @ ${price:,.4f} | {reason} | PnL: ${pnl:+.2f}")

@@ -69,9 +69,8 @@ class CorrStrategy:
                         reason = "TIMEOUT"
 
                     if reason:
-                        proceeds = pos["size"] * price
-                        self.balance += proceeds
-                        pnl = proceeds - pos["size"] * entry
+                        self.balance += costs.net_proceeds(entry, price, pos["size"])
+                        pnl = costs.net_pnl(entry, price, pos["size"])[0]
                         del self.positions[symbol]
                         await self.log(self.bot_id,
                             f"[CORR] SELL {symbol} @ ${price:,.4f} | {reason} | PnL: ${pnl:+.2f}")
