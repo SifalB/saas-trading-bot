@@ -49,6 +49,21 @@ async def health():
     return {"status": "ok"}
 
 
+@app.get("/api/diag/exchange")
+async def diag_exchange():
+    """Public reachability check: can this host pull Binance public data?"""
+    import ccxt.async_support as ccxt
+
+    ex = ccxt.binance({"options": {"defaultType": "spot"}})
+    try:
+        t = await ex.fetch_ticker("BTC/USDT")
+        return {"ok": True, "exchange": "binance", "btc_usdt": t.get("last")}
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "exchange": "binance", "error": str(e)[:400]}
+    finally:
+        await ex.close()
+
+
 # ── Serve the exported Next.js frontend (single-instance deploy) ───────────────
 # In the Docker image the static export is copied to FRONTEND_DIR. When it is
 # absent (backend-only local dev), these routes simply don't get registered.

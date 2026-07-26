@@ -85,23 +85,25 @@ class GridStrategy:
                 })
 
     async def run(self) -> None:
-        # Initialize grids
-        for symbol in self.symbols:
-            ticker = await self.exchange.fetch_ticker(symbol)
-            price = ticker["last"]
-            self.grids[symbol] = self._build_grid(symbol, price)
-            await self.log(self.bot_id,
-                f"[GRID] {symbol} initialized @ ${price:,.4f} | "
-                f"Range: ${self.grids[symbol]['prices'][0]:,.4f} — ${self.grids[symbol]['prices'][-1]:,.4f}")
-
         while True:
             for symbol in self.symbols:
-                ticker = await self.exchange.fetch_ticker(symbol)
-                price = ticker["last"]
+                try:
+                    ticker = await self.exchange.fetch_ticker(symbol)
+                    price = ticker["last"]
 
-                if self._is_outside(self.grids[symbol], price):
-                    await self._reset_grid(symbol, price)
+                    # Lazily initialize each grid once we can reach the exchange,
+                    # so a transient/geo error at startup doesn't kill the bot.
+                    if symbol not in self.grids:
+                        self.grids[symbol] = self._build_grid(symbol, price)
+                        await self.log(self.bot_id,
+                            f"[GRID] {symbol} initialized @ ${price:,.4f} | "
+                            f"Range: ${self.grids[symbol]['prices'][0]:,.4f} — ${self.grids[symbol]['prices'][-1]:,.4f}")
 
-                await self._check(symbol, price)
+                    if self._is_outside(self.grids[symbol], price):
+                        await self._reset_grid(symbol, price)
+
+                    await self._check(symbol, price)
+                except Exception as e:  # noqa: BLE001 — keep the bot alive on data errors
+                    await self.log(self.bot_id, f"[GRID] Error on {symbol}: {e}")
 
             await asyncio.sleep(self.poll_interval)

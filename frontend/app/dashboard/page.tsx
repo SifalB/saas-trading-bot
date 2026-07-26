@@ -5,7 +5,7 @@ import Nav from '@/components/Nav';
 import PortfolioChart from '@/components/PortfolioChart';
 import StrategyCard from '@/components/StrategyCard';
 import Card, { CardHead, CardLabel } from '@/components/Card';
-import { dashboard, auth, isLoggedIn, type Stats, type StrategyStat, type Trade, trades as tradesApi } from '@/lib/api';
+import { dashboard, auth, bots as botApi, isLoggedIn, type Stats, type StrategyStat, type Trade, trades as tradesApi } from '@/lib/api';
 
 function seed5000(pnl: number) {
   const base = 5000;
@@ -24,6 +24,19 @@ export default function DashboardPage() {
   const [recentTrades, setRecentTrades] = useState<Trade[]>([]);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
+  const [launching, setLaunching] = useState(false);
+
+  async function launchAll() {
+    setLaunching(true);
+    try {
+      await botApi.launchAll();
+      await load();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLaunching(false);
+    }
+  }
 
   async function load() {
     try {
@@ -100,13 +113,19 @@ export default function DashboardPage() {
         </div>
 
         {/* ── STRATEGIES ───────────────────────────────────────── */}
-        <div style={{ marginBottom: 18 }}>
-          <div style={{ fontFamily: 'Geist Mono', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-            Strategies
+        <div style={{ marginBottom: 18, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
+          <div>
+            <div style={{ fontFamily: 'Geist Mono', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+              Strategies
+            </div>
+            <h2 style={{ fontSize: 26, letterSpacing: '-0.02em', fontWeight: 500, margin: '4px 0 0' }}>
+              Each strategy at a glance
+            </h2>
           </div>
-          <h2 style={{ fontSize: 26, letterSpacing: '-0.02em', fontWeight: 500, margin: '4px 0 0' }}>
-            Each strategy at a glance
-          </h2>
+          <button onClick={launchAll} disabled={launching}
+            style={{ padding: '11px 18px', background: anyRunning ? 'rgba(14,15,18,0.06)' : 'var(--ink)', color: anyRunning ? 'var(--ink)' : '#fff', border: 0, borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: launching ? 'default' : 'pointer', opacity: launching ? 0.7 : 1, whiteSpace: 'nowrap' }}>
+            {launching ? 'Launching…' : anyRunning ? 'Restart all (paper)' : 'Launch all strategies (paper)'}
+          </button>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 40 }}>

@@ -80,6 +80,46 @@ async def delete_bot(
     await db.commit()
 
 
+_LAUNCH_ALL = {
+    "mtf": "Multi-Timeframe",
+    "scalp": "Scalping (RSI+EMA)",
+    "grid": "Grid",
+    "corr": "Correlation",
+}
+
+
+@router.post("/launch-all", response_model=list[BotResponse])
+async def launch_all(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a paper bot for each strategy (if missing) and start all of them."""
+    result = await db.execute(select(Bot).where(Bot.user_id == current_user.id))
+    existing = {b.type: b for b in result.scalars().all()}
+
+    bots: list[Bot] = []
+    for btype, label in _LAUNCH_ALL.items():
+        bot = existing.get(btype)
+        if bot is None:
+            bot = Bot(
+                user_id=current_user.id,
+                name=label,
+                type=btype,
+                config=dict(DEFAULT_CONFIGS[btype]),
+                paper_mode=True,
+            )
+            db.add(bot)
+            await db.commit()
+            await db.refresh(bot)
+        bots.append(bot)
+
+    for bot in bots:
+        if not task_manager.is_running(bot.id):
+            task_manager.start(bot.id, lambda bid=bot.id: run_bot(bid))
+
+    return bots
+
+
 @router.post("/{bot_id}/start", status_code=204)
 async def start_bot(
     bot_id: int,

@@ -61,6 +61,7 @@ export const bots = {
   start: (id: number) => req(`/bots/${id}/start`, { method: 'POST' }),
   stop: (id: number) => req(`/bots/${id}/stop`, { method: 'POST' }),
   defaults: (type: string) => req<Record<string, unknown>>(`/bots/defaults/${type}`),
+  launchAll: () => req<Bot[]>('/bots/launch-all', { method: 'POST' }),
 };
 
 // ── Trades ────────────────────────────────────────────────────────────────────
