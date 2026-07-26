@@ -25,11 +25,16 @@ async def get_stats(
     all_trades = result.scalars().all()
 
     today = datetime.now(UTC).date()
-    trades_today = sum(1 for t in all_trades if t.exit_time.date() == today)
-    wins = sum(1 for t in all_trades if t.pnl_usdt > 0)
+    # MARK rows are mark-to-market snapshots of the buy & hold benchmark, not
+    # round trips. They carry real P&L but must never be counted as trades or
+    # they swamp the trade count and destroy the win rate.
+    real = [t for t in all_trades if t.reason != "MARK"]
+
+    trades_today = sum(1 for t in real if t.exit_time.date() == today)
+    wins = sum(1 for t in real if t.pnl_usdt > 0)
     total_pnl = sum(t.pnl_usdt for t in all_trades)
-    best = max((t.pnl_usdt for t in all_trades), default=0.0)
-    worst = min((t.pnl_usdt for t in all_trades), default=0.0)
+    best = max((t.pnl_usdt for t in real), default=0.0)
+    worst = min((t.pnl_usdt for t in real), default=0.0)
 
     bots_result = await db.execute(select(Bot).where(Bot.user_id == current_user.id))
     all_bots = bots_result.scalars().all()
@@ -37,8 +42,8 @@ async def get_stats(
 
     return DashboardStats(
         total_pnl=round(total_pnl, 4),
-        total_trades=len(all_trades),
-        win_rate=round(wins / len(all_trades) * 100, 1) if all_trades else 0.0,
+        total_trades=len(real),
+        win_rate=round(wins / len(real) * 100, 1) if real else 0.0,
         best_trade=round(best, 4),
         worst_trade=round(worst, 4),
         active_bots=active_bots,
@@ -110,13 +115,16 @@ async def strategies(
         bot_ids = {b.id for b in sbots}
         strades = [t for t in all_trades if t.bot_id in bot_ids]
         today_trades = [t for t in strades if t.exit_time and t.exit_time.date() == today]
+        # P&L counts every row; trade statistics exclude mark-to-market rows.
+        real = [t for t in strades if t.reason != "MARK"]
+        real_today = [t for t in today_trades if t.reason != "MARK"]
 
         total_pnl = sum(t.pnl_usdt for t in strades)
         pnl_today = sum(t.pnl_usdt for t in today_trades)
-        wins = sum(1 for t in strades if t.pnl_usdt > 0)
-        win_rate = round(wins / len(strades) * 100, 1) if strades else 0.0
-        best = max((t.pnl_usdt for t in strades), default=0.0)
-        worst = min((t.pnl_usdt for t in strades), default=0.0)
+        wins = sum(1 for t in real if t.pnl_usdt > 0)
+        win_rate = round(wins / len(real) * 100, 1) if real else 0.0
+        best = max((t.pnl_usdt for t in real), default=0.0)
+        worst = min((t.pnl_usdt for t in real), default=0.0)
         initial = sum(float(b.config.get("initial_balance", 5000.0)) for b in sbots)
         running = any(task_manager.is_running(b.id) for b in sbots)
 
@@ -126,15 +134,23 @@ async def strategies(
             total_pnl=round(total_pnl, 4),
             pnl_today=round(pnl_today, 4),
             win_rate=win_rate,
-            total_trades=len(strades),
-            trades_today=len(today_trades),
+            total_trades=len(real),
+            trades_today=len(real_today),
             best_trade=round(best, 4),
             worst_trade=round(worst, 4),
             bot_count=len(sbots),
             running=running,
             initial_balance=round(initial, 4),
             current_balance=round(initial + total_pnl, 4),
+            return_pct=round(total_pnl / (initial or 5000.0) * 100, 3),
+            vs_benchmark=0.0,   # filled in below once the benchmark is known
         ))
+
+    # Every active strategy is measured against buying the basket and waiting.
+    benchmark = next((s for s in out if s.strategy == "hold"), None)
+    bench_return = benchmark.return_pct if benchmark else 0.0
+    for s in out:
+        s.vs_benchmark = round(s.return_pct - bench_return, 3)
 
     # Best performer first; ties keep the STRATEGY_LABELS order.
     return sorted(out, key=lambda x: x.total_pnl, reverse=True)

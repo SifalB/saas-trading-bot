@@ -39,6 +39,8 @@ class StrategyStats(BaseModel):
     running: bool
     initial_balance: float
     current_balance: float
+    return_pct: float = 0.0
+    vs_benchmark: float = 0.0
 
 
 class BotUpdate(BaseModel):

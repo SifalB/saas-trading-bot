@@ -15,6 +15,8 @@ export default function StrategyCard({ s }: { s: StrategyStat }) {
   const pnlColor = s.total_pnl > 0 ? 'var(--green)' : s.total_pnl < 0 ? 'var(--red)' : 'var(--ink)';
   const todayColor = s.pnl_today > 0 ? 'var(--green)' : s.pnl_today < 0 ? 'var(--red)' : 'var(--muted)';
   const sign = (n: number) => (n >= 0 ? '+' : '');
+  const isBenchmark = s.strategy === 'hold';
+  const beating = s.vs_benchmark > 0;
 
   return (
     <div style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 18, padding: 24, display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -34,13 +36,30 @@ export default function StrategyCard({ s }: { s: StrategyStat }) {
 
       {/* P&L */}
       <div>
-        <div style={{ fontSize: 34, fontWeight: 500, letterSpacing: '-0.025em', color: pnlColor }}>
-          {sign(s.total_pnl)}${s.total_pnl.toFixed(2)}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 34, fontWeight: 500, letterSpacing: '-0.025em', color: pnlColor }}>
+            {sign(s.total_pnl)}${s.total_pnl.toFixed(2)}
+          </div>
+          <div style={{ fontFamily: 'Geist Mono', fontSize: 14, color: pnlColor }}>
+            {sign(s.return_pct)}{s.return_pct.toFixed(2)}%
+          </div>
         </div>
         <div style={{ fontFamily: 'Geist Mono', fontSize: 12, color: todayColor, marginTop: 4 }}>
           {sign(s.pnl_today)}${s.pnl_today.toFixed(2)} today
         </div>
       </div>
+
+      {/* Verdict against the do-nothing benchmark */}
+      {!isBenchmark && (
+        <div style={{
+          fontFamily: 'Geist Mono', fontSize: 11, letterSpacing: '0.04em',
+          padding: '8px 10px', borderRadius: 8,
+          background: beating ? 'rgba(20,180,130,0.10)' : 'rgba(14,15,18,0.05)',
+          color: beating ? 'var(--green)' : 'var(--muted)',
+        }}>
+          {beating ? '▲' : '▼'} {sign(s.vs_benchmark)}{s.vs_benchmark.toFixed(2)}% vs Buy &amp; Hold
+        </div>
+      )}
 
       {/* Mini stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, paddingTop: 16, borderTop: '1px solid var(--line)' }}>

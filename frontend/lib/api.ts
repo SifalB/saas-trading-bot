@@ -102,6 +102,7 @@ export type StrategyStat = {
   best_trade: number; worst_trade: number;
   bot_count: number; running: boolean;
   initial_balance: number; current_balance: number;
+  return_pct: number; vs_benchmark: number;
 };
 
 export type Portfolio = {
