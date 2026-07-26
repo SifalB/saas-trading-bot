@@ -5,7 +5,7 @@ import Nav from '@/components/Nav';
 import PortfolioChart from '@/components/PortfolioChart';
 import StrategyCard from '@/components/StrategyCard';
 import Card, { CardHead, CardLabel } from '@/components/Card';
-import { dashboard, auth, bots as botApi, isLoggedIn, type Stats, type StrategyStat, type Trade, trades as tradesApi } from '@/lib/api';
+import { dashboard, auth, bots as botApi, isLoggedIn, type Stats, type StrategyStat, type Trade, type Portfolio, trades as tradesApi } from '@/lib/api';
 
 function seed5000(pnl: number) {
   const base = 5000;
@@ -20,6 +20,7 @@ function seed5000(pnl: number) {
 export default function DashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
+  const [pf, setPf] = useState<Portfolio | null>(null);
   const [strategies, setStrategies] = useState<StrategyStat[]>([]);
   const [recentTrades, setRecentTrades] = useState<Trade[]>([]);
   const [email, setEmail] = useState('');
@@ -40,13 +41,14 @@ export default function DashboardPage() {
 
   async function load() {
     try {
-      const [s, str, t, me] = await Promise.all([
+      const [s, p, str, t, me] = await Promise.all([
         dashboard.stats(),
+        dashboard.portfolio(),
         dashboard.strategies(),
         tradesApi.list({ limit: 6 }),
         auth.me(),
       ]);
-      setStats(s); setStrategies(str); setRecentTrades(t); setEmail(me.email);
+      setStats(s); setPf(p); setStrategies(str); setRecentTrades(t); setEmail(me.email);
     } catch {
       router.push('/login');
     } finally {
@@ -74,9 +76,10 @@ export default function DashboardPage() {
 
   const overviewTiles = [
     { k: 'Total P&L', v: `${sign(totalPnl)}$${totalPnl.toFixed(2)}`, color: totalPnl > 0 ? 'var(--green)' : totalPnl < 0 ? 'var(--red)' : 'var(--ink)' },
-    { k: 'Win rate', v: `${stats?.win_rate ?? 0}%` },
-    { k: 'Trades today', v: String(stats?.trades_today ?? 0) },
-    { k: 'Total trades', v: String(stats?.total_trades ?? 0) },
+    { k: 'Available to trade', v: `$${(pf?.available_cash ?? 0).toFixed(2)}`, sub: 'free cash' },
+    { k: 'In positions', v: `$${(pf?.deployed ?? 0).toFixed(2)}`, sub: `${pf?.open_positions ?? 0} open` },
+    { k: 'Fees paid', v: `-$${(pf?.total_fees ?? 0).toFixed(2)}`, color: 'var(--muted)' },
+    { k: 'Win rate', v: `${stats?.win_rate ?? 0}%`, sub: `${stats?.total_trades ?? 0} trades` },
     { k: 'Active strategies', v: `${activeStrategies} / ${strategies.length}` },
   ];
 
@@ -95,14 +98,18 @@ export default function DashboardPage() {
               ? <>Portfolio <span className="serif">{sign(totalPnl)}${totalPnl.toFixed(2)}</span> across all strategies.</>
               : <>Your <span className="serif">trading cockpit.</span></>}
           </h1>
+          <p style={{ fontFamily: 'Geist Mono', fontSize: 11, color: 'var(--muted)', margin: '10px 0 0', letterSpacing: '0.03em' }}>
+            Each strategy trades its own independent ${(5000).toLocaleString()} paper account — including the Buy &amp; Hold benchmark — so returns compare directly.
+          </p>
         </div>
 
         {/* Overview tiles */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14, marginBottom: 28 }}>
-          {overviewTiles.map(({ k, v, color }) => (
+          {overviewTiles.map(({ k, v, color, sub }) => (
             <Card key={k} style={{ padding: 20 }}>
               <div style={{ fontFamily: 'Geist Mono', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>{k}</div>
               <div style={{ fontSize: 24, fontWeight: 500, letterSpacing: '-0.02em', color: color ?? 'var(--ink)' }}>{v}</div>
+              {sub && <div style={{ fontFamily: 'Geist Mono', fontSize: 10, color: 'var(--muted)', marginTop: 4 }}>{sub}</div>}
             </Card>
           ))}
         </div>

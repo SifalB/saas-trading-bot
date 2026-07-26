@@ -104,8 +104,15 @@ export type StrategyStat = {
   initial_balance: number; current_balance: number;
 };
 
+export type Portfolio = {
+  starting_capital: number; realized_pnl: number; total_fees: number;
+  available_cash: number; deployed: number; equity: number;
+  open_positions: number; running_bots: number;
+};
+
 export const dashboard = {
   stats: () => req<Stats>('/dashboard/stats'),
+  portfolio: () => req<Portfolio>('/dashboard/portfolio'),
   compare: () => req<BotStats[]>('/dashboard/compare'),
   strategies: () => req<StrategyStat[]>('/dashboard/strategies'),
 };

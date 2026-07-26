@@ -8,6 +8,8 @@ from typing import Callable
 
 _tasks: dict[int, asyncio.Task] = {}
 _log_queues: dict[int, asyncio.Queue] = {}
+# Live strategy objects, so the dashboard can read current cash/positions.
+_strategies: dict[int, object] = {}
 
 
 def is_running(bot_id: int) -> bool:
@@ -28,6 +30,15 @@ def stop(bot_id: int) -> None:
     if task and not task.done():
         task.cancel()
     _log_queues.pop(bot_id, None)
+    _strategies.pop(bot_id, None)
+
+
+def register_strategy(bot_id: int, strategy: object) -> None:
+    _strategies[bot_id] = strategy
+
+
+def get_strategy(bot_id: int) -> object | None:
+    return _strategies.get(bot_id)
 
 
 def get_log_queue(bot_id: int) -> asyncio.Queue | None:

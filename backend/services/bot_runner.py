@@ -148,6 +148,8 @@ async def run_bot(bot_id: int) -> None:
         trade_fn=_save_trade,
     )
 
+    task_manager.register_strategy(bot_id, strategy)
+
     try:
         await strategy.run()
     except asyncio.CancelledError:

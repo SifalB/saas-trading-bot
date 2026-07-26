@@ -46,6 +46,52 @@ async def get_stats(
     )
 
 
+@router.get("/portfolio")
+async def portfolio(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Live money view: what's free to trade vs committed, plus realized P&L."""
+    from backend.services import portfolio as portfolio_svc
+
+    bots_result = await db.execute(select(Bot).where(Bot.user_id == current_user.id))
+    all_bots = bots_result.scalars().all()
+
+    trades_result = await db.execute(select(Trade).where(Trade.user_id == current_user.id))
+    all_trades = trades_result.scalars().all()
+
+    realized_pnl = sum(t.pnl_usdt for t in all_trades)
+    total_fees = sum(t.fees_usdt or 0.0 for t in all_trades)
+
+    cash = deployed = 0.0
+    open_positions = 0
+    starting_capital = 0.0
+    running = 0
+
+    for bot in all_bots:
+        starting_capital += float(
+            bot.config.get("initial_balance", bot.config.get("investment", 5000.0))
+        )
+        strategy = task_manager.get_strategy(bot.id)
+        if strategy is not None and task_manager.is_running(bot.id):
+            running += 1
+            snap = portfolio_svc.snapshot(strategy)
+            cash += snap["cash"]
+            deployed += snap["deployed"]
+            open_positions += snap["open_positions"]
+
+    return {
+        "starting_capital": round(starting_capital, 2),
+        "realized_pnl": round(realized_pnl, 2),
+        "total_fees": round(total_fees, 2),
+        "available_cash": round(cash, 2),
+        "deployed": round(deployed, 2),
+        "equity": round(cash + deployed, 2),
+        "open_positions": open_positions,
+        "running_bots": running,
+    }
+
+
 @router.get("/strategies", response_model=list[StrategyStats])
 async def strategies(
     current_user: User = Depends(get_current_user),

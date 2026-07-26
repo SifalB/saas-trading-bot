@@ -45,6 +45,8 @@ class HoldStrategy:
                 ticker = await self.exchange.fetch_ticker(symbol)
                 price = float(ticker["last"])
                 size = per_symbol / price
+                # Cash actually leaves the wallet when the basket is bought.
+                self.balance -= per_symbol
                 self.holdings[symbol] = {
                     "size": size,
                     "entry_price": price,
