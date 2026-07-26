@@ -14,8 +14,6 @@ from .deps import get_current_user
 
 router = APIRouter(prefix="/bots", tags=["bots"])
 
-MAX_BOTS_FREE = 1
-
 
 @router.get("/defaults/{bot_type}")
 async def get_default_config(bot_type: str):
@@ -36,11 +34,6 @@ async def create_bot(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if current_user.plan == "free":
-        result = await db.execute(select(Bot).where(Bot.user_id == current_user.id))
-        if len(result.scalars().all()) >= MAX_BOTS_FREE:
-            raise HTTPException(status_code=403, detail="Free plan limited to 1 bot. Upgrade to Pro.")
-
     if body.type not in ("grid", "scalp", "corr", "mtf"):
         raise HTTPException(status_code=400, detail="Invalid bot type. Use: grid | scalp | corr | mtf")
 

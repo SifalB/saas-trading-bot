@@ -11,22 +11,23 @@ from .deps import get_current_user
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+@router.get("/setup-needed")
+async def setup_needed(db: AsyncSession = Depends(get_db)):
+    """True when no owner account exists yet (first-run setup is available)."""
+    result = await db.execute(select(User.id).limit(1))
+    return {"setup_needed": result.first() is None}
+
+
 @router.post("/register", response_model=TokenResponse, status_code=201)
 async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    existing = await db.execute(select(User).where(User.email == body.email))
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Email already registered")
+    # Single-user app: registration creates the owner account once, then locks.
+    existing = await db.execute(select(User.id).limit(1))
+    if existing.first() is not None:
+        raise HTTPException(status_code=403, detail="This instance already has an owner. Sign in instead.")
 
     user = User(
         email=body.email,
         password_hash=hash_password(body.password),
-        first_name=body.first_name,
-        last_name=body.last_name,
-        age=body.age,
-        phone=body.phone,
-        address=body.address,
-        city=body.city,
-        country=body.country,
     )
     db.add(user)
     await db.commit()
@@ -48,14 +49,6 @@ async def me(current_user: User = Depends(get_current_user)):
     return UserResponse(
         id=current_user.id,
         email=current_user.email,
-        first_name=current_user.first_name,
-        last_name=current_user.last_name,
-        age=current_user.age,
-        phone=current_user.phone,
-        address=current_user.address,
-        city=current_user.city,
-        country=current_user.country,
-        plan=current_user.plan,
         has_binance_keys=bool(current_user.binance_api_key),
     )
 

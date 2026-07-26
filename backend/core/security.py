@@ -1,12 +1,10 @@
 from datetime import datetime, timedelta, UTC
 
+import bcrypt
 from cryptography.fernet import Fernet
 from jose import jwt
-from passlib.context import CryptContext
 
 from .config import settings
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 try:
     _fernet = Fernet(settings.FERNET_KEY.strip().encode())
@@ -21,11 +19,16 @@ except Exception as exc:  # noqa: BLE001 — turn a cryptic traceback into a cle
 # ── Passwords ─────────────────────────────────────────────────────────────────
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    # bcrypt operates on the first 72 bytes; truncate to stay within that limit.
+    pw = password.encode("utf-8")[:72]
+    return bcrypt.hashpw(pw, bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(plain.encode("utf-8")[:72], hashed.encode("utf-8"))
+    except (ValueError, TypeError):
+        return False
 
 
 # ── JWT ───────────────────────────────────────────────────────────────────────

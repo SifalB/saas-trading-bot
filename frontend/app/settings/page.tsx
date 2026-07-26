@@ -8,7 +8,6 @@ import { auth, clearToken, isLoggedIn } from '@/lib/api';
 export default function SettingsPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
-  const [plan, setPlan] = useState('free');
   const [hasKeys, setHasKeys] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [secret, setSecret] = useState('');
@@ -17,7 +16,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!isLoggedIn()) { router.push('/login'); return; }
-    auth.me().then(me => { setEmail(me.email); setPlan(me.plan); setHasKeys(me.has_binance_keys); })
+    auth.me().then(me => { setEmail(me.email); setHasKeys(me.has_binance_keys); })
       .catch(() => router.push('/login'));
   }, []);
 
@@ -48,16 +47,9 @@ export default function SettingsPage() {
         {/* Account info */}
         <Card style={{ marginBottom: 20 }}>
           <CardHead><CardLabel>Account</CardLabel></CardHead>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-            {[
-              { k: 'Email', v: email },
-              { k: 'Plan', v: plan.charAt(0).toUpperCase() + plan.slice(1) },
-            ].map(({ k, v }) => (
-              <div key={k}>
-                <div style={{ fontFamily: 'Geist Mono', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>{k}</div>
-                <div style={{ fontSize: 17, fontWeight: 500 }}>{v}</div>
-              </div>
-            ))}
+          <div>
+            <div style={{ fontFamily: 'Geist Mono', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>Email</div>
+            <div style={{ fontSize: 17, fontWeight: 500 }}>{email}</div>
           </div>
         </Card>
 

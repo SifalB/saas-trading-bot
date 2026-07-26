@@ -31,19 +31,16 @@ async function req<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 export const auth = {
-  register: (data: {
-    email: string; password: string;
-    first_name: string; last_name: string; age: number;
-    phone?: string; address?: string; city?: string; country?: string;
-  }) =>
+  setupNeeded: () => req<{ setup_needed: boolean }>('/auth/setup-needed'),
+  register: (email: string, password: string) =>
     req<{ access_token: string }>('/auth/register', {
-      method: 'POST', body: JSON.stringify(data),
+      method: 'POST', body: JSON.stringify({ email, password }),
     }),
   login: (email: string, password: string) =>
     req<{ access_token: string }>('/auth/login', {
       method: 'POST', body: JSON.stringify({ email, password }),
     }),
-  me: () => req<{ id: number; email: string; plan: string; has_binance_keys: boolean }>('/auth/me'),
+  me: () => req<{ id: number; email: string; has_binance_keys: boolean }>('/auth/me'),
   setBinanceKeys: (api_key: string, secret: string) =>
     req('/auth/binance-keys', { method: 'PUT', body: JSON.stringify({ api_key, secret }) }),
 };
