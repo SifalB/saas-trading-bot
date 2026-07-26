@@ -18,9 +18,35 @@ from backend.core.database import init_db
 from backend.api import auth, bots, trades, dashboard
 
 
+async def _resume_running_bots() -> None:
+    """Restart bots that were running before the process stopped.
+
+    Running tasks live only in memory, so every deploy or restart silently
+    killed them while the database still reported "running" — the dashboard
+    showed active bots that no longer existed. Resuming here closes that gap.
+    """
+    from sqlalchemy import select
+
+    from backend.core.database import AsyncSessionLocal
+    from backend.models.bot import Bot
+    from backend.services.bot_runner import run_bot
+    from backend.workers import task_manager
+
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(Bot).where(Bot.status == "running"))
+        bots = result.scalars().all()
+
+    for bot in bots:
+        if not task_manager.is_running(bot.id):
+            task_manager.start(bot.id, lambda bid=bot.id: run_bot(bid))
+    if bots:
+        print(f"Resumed {len(bots)} bot(s) after restart: {[b.name for b in bots]}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    await _resume_running_bots()
     yield
 
 
