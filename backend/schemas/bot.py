@@ -25,6 +25,22 @@ class BotStats(BaseModel):
     current_balance: float
 
 
+class StrategyStats(BaseModel):
+    strategy: str          # grid | scalp | corr | mtf
+    label: str
+    total_pnl: float
+    pnl_today: float
+    win_rate: float
+    total_trades: int
+    trades_today: int
+    best_trade: float
+    worst_trade: float
+    bot_count: int
+    running: bool
+    initial_balance: float
+    current_balance: float
+
+
 class BotUpdate(BaseModel):
     name: str | None = None
     config: dict | None = None

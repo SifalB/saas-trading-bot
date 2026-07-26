@@ -94,7 +94,17 @@ export type BotStats = {
   initial_balance: number; current_balance: number;
 };
 
+export type StrategyStat = {
+  strategy: string; label: string;
+  total_pnl: number; pnl_today: number; win_rate: number;
+  total_trades: number; trades_today: number;
+  best_trade: number; worst_trade: number;
+  bot_count: number; running: boolean;
+  initial_balance: number; current_balance: number;
+};
+
 export const dashboard = {
   stats: () => req<Stats>('/dashboard/stats'),
   compare: () => req<BotStats[]>('/dashboard/compare'),
+  strategies: () => req<StrategyStat[]>('/dashboard/strategies'),
 };
