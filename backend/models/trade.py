@@ -17,8 +17,9 @@ class Trade(Base):
     entry_price: Mapped[float] = mapped_column(Float, nullable=False)
     exit_price: Mapped[float] = mapped_column(Float, nullable=False)
     size: Mapped[float] = mapped_column(Float, nullable=False)
-    pnl_usdt: Mapped[float] = mapped_column(Float, nullable=False)
+    pnl_usdt: Mapped[float] = mapped_column(Float, nullable=False)  # NET of fees + slippage
     pnl_pct: Mapped[float] = mapped_column(Float, nullable=False)
+    fees_usdt: Mapped[float] = mapped_column(Float, nullable=False, default=0.0, server_default="0")
     reason: Mapped[str] = mapped_column(String, nullable=False)  # TAKE_PROFIT | STOP_LOSS | TIMEOUT | SIGNAL
     entry_time: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     exit_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))

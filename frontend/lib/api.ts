@@ -68,7 +68,7 @@ export const bots = {
 export type Trade = {
   id: number; bot_id: number; bot_type: string; bot_name: string; symbol: string;
   entry_price: number; exit_price: number; size: number;
-  pnl_usdt: number; pnl_pct: number; reason: string;
+  pnl_usdt: number; pnl_pct: number; fees_usdt: number; reason: string;
   entry_time: string; exit_time: string;
 };
 

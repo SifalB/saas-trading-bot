@@ -7,6 +7,8 @@ from collections import deque
 from datetime import datetime, UTC
 from typing import Callable
 
+from . import costs
+
 
 class CorrStrategy:
     def __init__(self, bot_id: int, user_id: int, config: dict,
@@ -22,7 +24,7 @@ class CorrStrategy:
         self.alts: list[str] = config.get("alt_symbols", ["ETH/USDT", "BNB/USDT", "SOL/USDT"])
         self.threshold: float = config.get("btc_move_threshold", 0.0035)
         self.window: int = config.get("btc_window_seconds", 20)
-        self.take_profit: float = config.get("take_profit_pct", 0.006)
+        self.take_profit: float = costs.enforce_tp(config.get("take_profit_pct", 0.006))
         self.stop_loss: float = config.get("stop_loss_pct", 0.003)
         self.timeout: int = config.get("trade_timeout_seconds", 180)
         self.trade_size_pct: float = config.get("trade_size_pct", 0.25)

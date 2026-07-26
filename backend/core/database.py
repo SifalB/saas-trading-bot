@@ -34,3 +34,9 @@ async def init_db() -> None:
         # One-time forward migration: relax the old single-tenant schema.
         for col in _LEGACY_USER_COLUMNS:
             await conn.execute(text(f'ALTER TABLE users DROP COLUMN IF EXISTS "{col}"'))
+        # Additive migration for tables that already exist (create_all only
+        # creates missing tables, it never alters existing ones).
+        await conn.execute(text(
+            'ALTER TABLE trades ADD COLUMN IF NOT EXISTS fees_usdt '
+            'DOUBLE PRECISION NOT NULL DEFAULT 0'
+        ))

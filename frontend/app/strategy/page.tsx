@@ -15,6 +15,7 @@ const BOT_TYPES = [
   { type: 'dip', label: 'Dip Buyer (RSI-2)', desc: 'Buy sharp oversold dips below the lower Bollinger band in an uptrend, sell the bounce.' },
   { type: 'volbreak', label: 'Volatility Breakout', desc: 'Buy explosive range expansion (k x ATR above the session open) with volume.' },
   { type: 'rotation', label: 'Momentum Rotation', desc: 'Hold whichever coin has the strongest momentum; rotate as leadership changes.' },
+  { type: 'hold', label: 'Buy & Hold (benchmark)', desc: 'The control: buys an equal-weight basket once and holds. Every other bot must beat this to be worth running.' },
 ];
 
 export default function StrategyPage() {

@@ -14,6 +14,8 @@ import time
 from datetime import datetime, UTC
 from typing import Callable
 
+from . import costs
+
 import pandas as pd
 
 
@@ -117,7 +119,8 @@ class VolBreakStrategy:
                                 "entry_time": datetime.now(UTC),
                                 "entry_time_ts": now,
                                 "stop_loss": price - atr * self.sl_atr_mult,
-                                "target": price + atr * self.tp_atr_mult,
+                                "target": max(price + atr * self.tp_atr_mult,
+                                              price * (1 + costs.min_profit_pct())),
                             }
                             await self.log(self.bot_id,
                                 f"[VOLBREAK] BUY {symbol} @ ${price:,.4f} | trigger ${trigger:,.4f} "

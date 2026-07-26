@@ -6,6 +6,8 @@ import asyncio
 from datetime import datetime, UTC
 from typing import Callable
 
+from . import costs
+
 
 class GridStrategy:
     def __init__(self, bot_id: int, user_id: int, config: dict,
@@ -27,6 +29,9 @@ class GridStrategy:
 
     def _build_grid(self, symbol: str, price: float) -> dict:
         step = (price * self.range_pct * 2) / (self.levels * 2)
+        # Levels closer together than the round-trip cost can never profit,
+        # so widen the spacing to the break-even distance at minimum.
+        step = max(step, price * costs.min_profit_pct())
         grid_prices = [round(price + step * i, 6) for i in range(-self.levels, self.levels + 1)]
         inv_per_grid = (self.investment / len(self.symbols)) / (self.levels * 2)
         return {
@@ -70,6 +75,10 @@ class GridStrategy:
                 await self.log(self.bot_id, f"[GRID] BUY  {symbol} level {i} @ ${price:,.4f}")
 
             elif price >= next_price and i in grid["open_buys"]:
+                # Never book a "win" that its own fees would eat. Hold the
+                # level until the move actually clears the round trip.
+                if not costs.clears_costs(grid["open_buys"][i]["entry_price"], price):
+                    continue
                 buy = grid["open_buys"].pop(i)
                 cost = buy["size"] * buy["entry_price"]
                 proceeds = buy["size"] * price

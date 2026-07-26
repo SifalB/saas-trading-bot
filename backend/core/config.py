@@ -22,6 +22,13 @@ class Settings(BaseSettings):
     # CORS — comma-separated list, e.g. "http://localhost:3000,https://yourapp.vercel.app"
     CORS_ORIGINS: str = "http://localhost:3000"
 
+    # ── Simulated trading costs ───────────────────────────────────────────────
+    # Applied to every paper fill so results reflect what a real account would
+    # keep. Binance spot taker is 0.1% per side; slippage is the assumed gap
+    # between the quoted price and a realistic fill.
+    TRADING_FEE_RATE: float = 0.001    # per side (0.1%)
+    SLIPPAGE_RATE: float = 0.0005      # per side (0.05%)
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]

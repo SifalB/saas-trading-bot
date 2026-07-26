@@ -14,6 +14,8 @@ import time
 from datetime import datetime, UTC
 from typing import Callable
 
+from . import costs
+
 import pandas as pd
 
 
@@ -43,7 +45,7 @@ class MtfStrategy:
         self.vol_mult: float     = config.get("volume_multiplier", 1.5)
 
         self.stop_loss_pct: float       = config.get("stop_loss_pct", 0.0025)
-        self.take_profit_pct: float     = config.get("take_profit_pct", 0.004)
+        self.take_profit_pct: float     = costs.enforce_tp(config.get("take_profit_pct", 0.004))
         self.breakeven_trigger: float   = config.get("breakeven_trigger_pct", 0.0015)
         self.breakeven_buffer: float    = config.get("breakeven_buffer_pct", 0.0005)
         self.timeout_seconds: int       = config.get("trade_timeout_seconds", 300)

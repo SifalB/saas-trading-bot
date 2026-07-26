@@ -14,6 +14,7 @@ class TradeResponse(BaseModel):
     size: float
     pnl_usdt: float
     pnl_pct: float
+    fees_usdt: float
     reason: str
     entry_time: datetime
     exit_time: datetime

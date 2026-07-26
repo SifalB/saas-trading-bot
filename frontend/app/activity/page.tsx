@@ -12,6 +12,10 @@ const REASON_COLORS: Record<string, { bg: string; color: string; label: string }
   GRID_SELL:   { bg: 'rgba(20,180,130,0.12)', color: 'var(--green)', label: 'GD' },
   GRID_RESET:  { bg: 'rgba(14,15,18,0.06)',   color: 'var(--muted)', label: 'RS' },
   SIGNAL:      { bg: 'rgba(20,180,130,0.12)', color: 'var(--green)', label: 'SG' },
+  MARK:        { bg: 'rgba(14,15,18,0.06)',   color: 'var(--muted)', label: 'MK' },
+  CHANNEL_EXIT:{ bg: 'rgba(14,15,18,0.06)',   color: 'var(--muted)', label: 'CX' },
+  ROTATE:      { bg: 'rgba(14,15,18,0.06)',   color: 'var(--muted)', label: 'RT' },
+  RISK_OFF:    { bg: 'rgba(210,80,40,0.12)',  color: 'var(--red)',   label: 'RO' },
 };
 
 const STRATEGY_META: Record<string, { label: string; color: string }> = {
@@ -23,6 +27,7 @@ const STRATEGY_META: Record<string, { label: string; color: string }> = {
   dip:      { label: 'Dip',      color: 'oklch(0.6 0.15 330)' },
   volbreak: { label: 'VolBrk',   color: 'oklch(0.6 0.14 100)' },
   rotation: { label: 'Rotation', color: 'oklch(0.55 0.12 240)' },
+  hold:     { label: 'Hold',     color: 'oklch(0.5 0.02 250)' },
 };
 
 export default function ActivityPage() {

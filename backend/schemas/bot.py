@@ -180,6 +180,13 @@ ROTATION_DEFAULT_CONFIG = {
     "poll_interval": 60,
 }
 
+HOLD_DEFAULT_CONFIG = {
+    "symbols": ["BTC/USDT", "ETH/USDT", "BNB/USDT", "SOL/USDT"],
+    "mark_interval_seconds": 900,
+    "initial_balance": 5000.0,
+    "poll_interval": 60,
+}
+
 # Display names — single source of truth for the API and dashboard.
 STRATEGY_LABELS = {
     "mtf": "Multi-Timeframe",
@@ -190,6 +197,7 @@ STRATEGY_LABELS = {
     "dip": "Dip Buyer (RSI-2)",
     "volbreak": "Volatility Breakout",
     "rotation": "Momentum Rotation",
+    "hold": "Buy & Hold (benchmark)",
 }
 
 DEFAULT_CONFIGS = {
@@ -201,4 +209,5 @@ DEFAULT_CONFIGS = {
     "dip": DIP_DEFAULT_CONFIG,
     "volbreak": VOLBREAK_DEFAULT_CONFIG,
     "rotation": ROTATION_DEFAULT_CONFIG,
+    "hold": HOLD_DEFAULT_CONFIG,
 }

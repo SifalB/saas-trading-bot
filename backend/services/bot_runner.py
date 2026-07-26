@@ -16,6 +16,7 @@ from backend.models.bot import Bot, BotLog
 from backend.models.trade import Trade
 from backend.models.user import User
 from backend.workers import task_manager
+from . import costs
 from .strategy_grid import GridStrategy
 from .strategy_scalp import ScalpStrategy
 from .strategy_corr import CorrStrategy
@@ -24,6 +25,7 @@ from .strategy_breakout import BreakoutStrategy
 from .strategy_dip import DipStrategy
 from .strategy_volbreak import VolBreakStrategy
 from .strategy_rotation import RotationStrategy
+from .strategy_hold import HoldStrategy
 
 
 async def _save_log(bot_id: int, message: str) -> None:
@@ -34,16 +36,35 @@ async def _save_log(bot_id: int, message: str) -> None:
 
 
 async def _save_trade(bot_id: int, user_id: int, trade: dict) -> None:
+    """Persist a trade with exchange fees and slippage deducted.
+
+    Applied here, centrally, so every strategy is scored on what a real
+    account would actually keep — a gain smaller than its own round-trip
+    cost lands in the database as a loss, and is never counted as a win.
+    """
+    entry_price = trade["entry_price"]
+    exit_price = trade["exit_price"]
+    size = trade["size"]
+
+    # MARK rows are mark-to-market snapshots of a held position, not round
+    # trips, so they must not be charged entry/exit costs.
+    if trade["reason"] == "MARK":
+        net, fees = trade["pnl_usdt"], 0.0
+    else:
+        net, fees = costs.net_pnl(entry_price, exit_price, size)
+
+    cost_basis = size * entry_price
     async with AsyncSessionLocal() as db:
         db.add(Trade(
             bot_id=bot_id,
             user_id=user_id,
             symbol=trade["symbol"],
-            entry_price=trade["entry_price"],
-            exit_price=trade["exit_price"],
-            size=trade["size"],
-            pnl_usdt=trade["pnl_usdt"],
-            pnl_pct=trade["pnl_pct"],
+            entry_price=entry_price,
+            exit_price=exit_price,
+            size=size,
+            pnl_usdt=round(net, 6),
+            pnl_pct=round(net / cost_basis * 100, 4) if cost_basis else 0.0,
+            fees_usdt=round(fees, 6),
             reason=trade["reason"],
             entry_time=trade["entry_time"],
             exit_time=trade.get("exit_time", datetime.now(UTC)),
@@ -78,6 +99,7 @@ STRATEGY_MAP = {
     "dip": DipStrategy,
     "volbreak": VolBreakStrategy,
     "rotation": RotationStrategy,
+    "hold": HoldStrategy,
 }
 
 

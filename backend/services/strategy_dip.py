@@ -15,6 +15,8 @@ import time
 from datetime import datetime, UTC
 from typing import Callable
 
+from . import costs
+
 import pandas as pd
 
 
@@ -124,7 +126,8 @@ class DipStrategy:
                                 "entry_time": datetime.now(UTC),
                                 "entry_time_ts": now,
                                 "stop_loss": price * (1 - self.stop_loss_pct),
-                                "target": max(mid_band, price * 1.004),  # revert to mean
+                                # Revert to the mean, but never aim below break-even.
+                                "target": max(mid_band, price * (1 + costs.min_profit_pct())),
                             }
                             await self.log(self.bot_id,
                                 f"[DIP] BUY {symbol} @ ${price:,.4f} | RSI={rsi:.1f} "

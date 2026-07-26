@@ -6,6 +6,8 @@ import asyncio
 from datetime import datetime, UTC
 from typing import Callable
 
+from . import costs
+
 import pandas as pd
 import ta
 
@@ -26,7 +28,7 @@ class ScalpStrategy:
         self.rsi_buy: float = config.get("rsi_buy", 50)
         self.rsi_sell: float = config.get("rsi_sell", 62)
         self.ema_period: int = config.get("ema_period", 20)
-        self.take_profit: float = config.get("take_profit_pct", 0.005)
+        self.take_profit: float = costs.enforce_tp(config.get("take_profit_pct", 0.005))
         self.stop_loss: float = config.get("stop_loss_pct", 0.003)
         self.trade_size_pct: float = config.get("trade_size_pct", 0.45)
         self.poll_interval: int = config.get("poll_interval", 10)
