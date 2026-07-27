@@ -314,13 +314,18 @@ async def fetch_history(symbols: list[str], days: int, use_cache: bool = True) -
 
 async def run_strategy(stype: str, data: dict[str, pd.DataFrame],
                        starting_balance: float = 5000.0,
+                       params: dict | None = None,
                        max_steps: int = 2_000_000) -> dict[str, Any]:
-    """Replay one strategy over the loaded history and summarise the result."""
+    """Replay one strategy over the loaded history and summarise the result.
+
+    `params` overrides the strategy defaults, which is what the parameter
+    optimiser varies between runs.
+    """
     import importlib
     from unittest.mock import patch
 
     cls = STRATEGY_MAP[stype]
-    config = dict(DEFAULT_CONFIGS[stype])
+    config = {**DEFAULT_CONFIGS[stype], **(params or {})}
     config["initial_balance"] = starting_balance
     config["investment"] = starting_balance
     # Live bots poll every 5-10s. Replaying that over months would mean
@@ -375,6 +380,7 @@ async def run_strategy(stype: str, data: dict[str, pd.DataFrame],
     summary["strategy"] = stype
     summary["label"] = STRATEGY_LABELS[stype]
     summary["fees_paid"] = round(sum(t["fees_usdt"] for t in trades), 2)
+    summary["params"] = dict(params or {})
     return summary
 
 
