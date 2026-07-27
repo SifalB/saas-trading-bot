@@ -162,9 +162,13 @@ def verdict(train_pct: float, test_pct: float, benchmark_test: float) -> str:
     """Plain-language read on whether a result is real or curve-fitted."""
     if test_pct > benchmark_test and test_pct > 0:
         return "BEATS BUY & HOLD out-of-sample"
-    if test_pct > 0 and train_pct > 0:
+    # Judged on the unseen half alone: how it did while being fitted is not
+    # evidence either way. A strategy that made money on data the search never
+    # saw is a real (if unremarkable) result and must not be filed as "no edge"
+    # merely because the training window happened to be a bear market.
+    if test_pct > 0:
         return "profitable out-of-sample, but loses to buy & hold"
-    if train_pct > 5 and test_pct <= 0:
+    if train_pct > 0 and test_pct <= 0:
         return "OVERFIT - good in training, loses on unseen data"
     return "no edge"
 
